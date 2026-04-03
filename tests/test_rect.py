@@ -1,11 +1,13 @@
 from ui.types import Rect, Point
 
+
 def test_rect_create():
     rect = Rect(10, 20, 100, 200)
     assert rect.x == 10
     assert rect.y == 20
     assert rect.width == 100
     assert rect.height == 200
+
 
 def test_rect_min_max():
     rect = Rect(10, 20, 100, 200)
@@ -18,12 +20,14 @@ def test_rect_min_max():
     assert max_point.x == 110
     assert max_point.y == 220
 
+
 def test_rect_center():
     rect = Rect(10, 20, 100, 200)
     center_point = rect.center
     assert isinstance(center_point, Point)
     assert center_point.x == 60
     assert center_point.y == 120
+
 
 def test_rect_addition():
     rect1 = Rect(10, 20, 100, 200)
@@ -33,6 +37,7 @@ def test_rect_addition():
     assert result.y == 25
     assert result.width == 150
     assert result.height == 250
+
 
 def test_rect_subtraction():
     rect1 = Rect(10, 20, 100, 200)

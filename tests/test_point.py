@@ -1,7 +1,7 @@
 from ui.types import Point
 
 
-def test_point_creation():
+def test_point_create():
     p = Point(1, 2)
     assert p.x == 1
     assert p.y == 2
