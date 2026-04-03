@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from enum import StrEnum
 
 SupportsArithmetic = float | int
 
@@ -33,9 +34,9 @@ class Rect:
 
     @property
     def center(self) -> Point:
-        center_x = self.x + self.width / 2.0
-        center_y = self.y + self.height / 2.0
-        return Point(center_x, center_y)
+        cx = self.x + self.width / 2.0
+        cy = self.y + self.height / 2.0
+        return Point(cx, cy)
 
     @property
     def min(self) -> Point:
@@ -76,9 +77,38 @@ class Rect:
         raise TypeError(f"Unsupported type for subtraction: {type(other)}")
 
 
+class Display(StrEnum):
+    GROW = "grow"
+    CONTENT = "content"
+    FIXED = "fixed"
+
+
+class Position(StrEnum):
+    STATIC = "static"
+    RELATIVE = "relative"
+    ABSOLUTE = "absolute"
+    FIXED = "fixed"
+
+
 @dataclass(eq=True)
 class Element:
     rect: Rect = field(default_factory=Rect)
+
+    # Display and positioning
+    display: Display = Display.GROW
+    position: Position = Position.STATIC
+    
+    # Sizing
+    padding: float = 0.0
+    border: float = 0.0
+    content_width: float = 0.0
+    content_height: float = 0.0
+    
+    # Positioning offsets (for relative, absolute, fixed positioning)
+    offset_x: float = 0.0
+    offset_y: float = 0.0
+
+    # Meta
     id: str = field(default_factory=lambda: f"element_{id(object())}")
     children: list[Element] = field(default_factory=list)
     parent: Element | None = None
