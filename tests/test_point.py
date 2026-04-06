@@ -1,5 +1,3 @@
-from typing import Literal
-
 import pytest
 
 from tests.conftest import Operator

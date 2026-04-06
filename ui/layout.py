@@ -15,6 +15,12 @@ def layout(
     root: Element,
     available: Rect,
 ) -> None:
+    # Apply padding to the available space for this element
+    available.x += root.padding
+    available.y += root.padding
+    available.width -= root.padding * 2
+    available.height -= root.padding * 2
+
     # First calculate size based on display type and content
     size(root, available)
 
@@ -39,11 +45,9 @@ def layout(
 
 def size(element: Element, available: Rect) -> None:
     logger.info(f"Sizing element {element.id}")
-    padding = element.padding * 2 + element.border * 2
-    logger.debug(f"Padding: {padding}")
 
-    element.rect.width = available.width - padding
-    element.rect.height = available.height - padding
+    element.rect.width = available.width
+    element.rect.height = available.height
 
 
 def position(

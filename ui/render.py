@@ -1,22 +1,34 @@
+from copy import deepcopy
 from pathlib import Path
 
 import pygame
+from pygame.color import Color
 from pygame.locals import RESIZABLE
-from ui.types import Element
+import logging
 
+from ui.layout import layout
+from ui.types import Element, Rect
 
-# Colors for visualization
-COLORS = {
-    "background": (240, 240, 240),
-    "border": (0, 0, 0),
-    "text": (50, 50, 50),
+logger = logging.getLogger(__name__)
+
+COLORS: dict[str, Color] = {
+    "background": Color(255, 255, 255),
+    "border": Color(0, 0, 0),
+    "text": Color(0, 0, 0),
 }
+DEPTH_COLORS: list[Color] = [
+    Color(100, 150, 200),  # Light blue
+    Color(150, 200, 100),  # Light green
+    Color(200, 150, 100),  # Light orange
+    Color(200, 100, 150),  # Light pink
+    Color(150, 150, 200),  # Lavender
+]
 
 # Configuration
 BORDER_WIDTH = 2
 MIN_WINDOW_WIDTH = 800
 MIN_WINDOW_HEIGHT = 600
-FONT_SIZE = 12
+FONT_SIZE = 20
 FONT: pygame.font.Font
 
 
@@ -28,11 +40,12 @@ def render(root: Element, title: str = "UI Layout Renderer") -> None:
         root: The root Element to render
         title: Window title
     """
+    logger.debug("Initializing Pygame...")
     pygame.init()
 
     # Calculate window dimensions based on root element size
-    window_width = max(int(root.rect.width) + 40, MIN_WINDOW_WIDTH)
-    window_height = max(int(root.rect.height) + 40, MIN_WINDOW_HEIGHT)
+    window_width = MIN_WINDOW_WIDTH
+    window_height = MIN_WINDOW_HEIGHT
 
     screen = pygame.display.set_mode((window_width, window_height), RESIZABLE)
     pygame.display.set_caption(title)
@@ -41,14 +54,31 @@ def render(root: Element, title: str = "UI Layout Renderer") -> None:
     global FONT
     FONT = pygame.font.Font(None, FONT_SIZE)
 
+    logger.debug("Starting render loop...")
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.VIDEORESIZE:
+                window_width, window_height = event.size
+                screen = pygame.display.set_mode(
+                    (window_width, window_height), RESIZABLE
+                )
 
         # Draw background
         screen.fill(COLORS["background"])
+
+        # Layout all elements
+        layout(
+            root,
+            Rect(
+                x=0,
+                y=0,
+                width=window_width,
+                height=window_height,
+            ),
+        )
 
         # Draw all elements recursively
         draw_element(screen, root)
@@ -59,13 +89,18 @@ def render(root: Element, title: str = "UI Layout Renderer") -> None:
 
 def draw_element(screen: pygame.Surface, element: Element, level: int = 0) -> None:
     rect = element.rect
-    color = _get_color_for_level(level)
-    border_color = _get_border_color(color)
+
+    # Get the base color for this depth level and calculate a border color
+    base_color = DEPTH_COLORS[level % len(DEPTH_COLORS)]
+    border_color = deepcopy(base_color)
+    border_color.r = max(0, border_color.r - 50)
+    border_color.g = max(0, border_color.g - 50)
+    border_color.b = max(0, border_color.b - 50)
 
     # Draw filled rectangle with main color
     pygame.draw.rect(
         screen,
-        color,
+        base_color,
         (rect.x, rect.y, rect.width, rect.height),
     )
 
@@ -89,49 +124,17 @@ def draw_element(screen: pygame.Surface, element: Element, level: int = 0) -> No
         draw_element(screen, child, level + 1)
 
 
-def _get_color_for_level(level: int) -> tuple[int, int, int]:
-    colors = [
-        (100, 150, 200),  # Light blue
-        (150, 200, 100),  # Light green
-        (200, 150, 100),  # Light orange
-        (200, 100, 150),  # Light pink
-        (150, 150, 200),  # Lavender
-    ]
-    return colors[level % len(colors)]
-
-
-def _get_border_color(color: tuple[int, int, int]) -> tuple[int, int, int]:
-    r, g, b = color
-
-    # Darken the color by reducing brightness
-    darken_factor = 0.6
-    r = int(r * darken_factor)
-    g = int(g * darken_factor)
-    b = int(b * darken_factor)
-
-    # Increase saturation by finding the max component and boosting it
-    max_val = max(r, g, b)
-    saturation_boost = 1.3
-
-    if max_val > 0:
-        if r == max_val:
-            r = min(255, int(r * saturation_boost))
-        elif g == max_val:
-            g = min(255, int(g * saturation_boost))
-        elif b == max_val:
-            b = min(255, int(b * saturation_boost))
-
-    return (r, g, b)
-
-
-def render_file(xml_file_path: str, title: str = "UI Layout Renderer") -> None:
+def render_file(filename: str) -> None:
     """Render a UI layout from an XML file."""
-    xml_path = Path(xml_file_path)
+    logger.debug(f"Loading {filename}")
+    xml_path = Path(filename)
     if not xml_path.exists():
         raise FileNotFoundError("XML file not found")
     if not xml_path.is_file():
         raise ValueError("Provided path is not a file")
     with open(xml_path, "r") as f:
         xml_string = f.read()
+    logger.debug("Parsing file...")
     root_element = Element.parse(xml_string)
-    render(root_element, title)
+    logger.debug("Rendering file...")
+    render(root_element, xml_path.stem)
