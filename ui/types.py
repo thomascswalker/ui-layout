@@ -1,6 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
+import xml.etree.ElementTree as ET
+
+from pydantic import AliasChoices, BaseModel, Field
 
 SupportsArithmetic = float | int
 
@@ -79,7 +82,6 @@ class Rect:
 
 class Display(StrEnum):
     GROW = "grow"
-    CONTENT = "content"
     FIXED = "fixed"
 
 
@@ -90,27 +92,20 @@ class Position(StrEnum):
     FIXED = "fixed"
 
 
-@dataclass(eq=True)
-class Element:
-    rect: Rect = field(default_factory=Rect)
+class Element(BaseModel):
+    rect: Rect = Field(default_factory=Rect)
 
     # Display and positioning
     display: Display = Display.GROW
     position: Position = Position.STATIC
-    
+
     # Sizing
-    padding: float = 0.0
-    border: float = 0.0
-    content_width: float = 0.0
-    content_height: float = 0.0
-    
-    # Positioning offsets (for relative, absolute, fixed positioning)
-    offset_x: float = 0.0
-    offset_y: float = 0.0
+    padding: float = Field(default=0.0, validation_alias=AliasChoices("padding", "p"))
+    border: float = Field(default=0.0)
 
     # Meta
-    id: str = field(default_factory=lambda: f"element_{id(object())}")
-    children: list[Element] = field(default_factory=list)
+    id: str = Field(default_factory=lambda: f"element_{id(object())}")
+    children: list[Element] = Field(default_factory=list)
     parent: Element | None = None
 
     def __hash__(self) -> int:
@@ -125,3 +120,32 @@ class Element:
         if child in self.children:
             self.children.remove(child)
             child.parent = None
+
+    @classmethod
+    def parse(cls, xml_string: str | ET.Element) -> Element:
+        """Parse an XML string to create an Element tree."""
+
+        if isinstance(xml_string, str):
+            xml_element = ET.fromstring(xml_string)
+        else:
+            xml_element = xml_string
+
+        elem_id = xml_element.get("id", f"element_{id(xml_element)}")
+        display = Display(xml_element.get("display", "grow"))
+        position = Position(xml_element.get("position", "static"))
+        padding = float(xml_element.get("padding", 0.0))
+        border = float(xml_element.get("border", 0.0))
+
+        element = cls(
+            id=elem_id,
+            display=display,
+            position=position,
+            padding=padding,
+            border=border,
+        )
+
+        for child_xml in xml_element:
+            child_element = Element.parse(child_xml)
+            element.add_child(child_element)
+
+        return element

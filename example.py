@@ -35,11 +35,11 @@ def example_inline_elements():
     root = Element(rect=Rect(0, 0, 800, 600), display=Display.GROW)
 
     # Create inline elements
-    child1 = Element(display=Display.CONTENT, content_width=150, content_height=50)
+    child1 = Element(display=Display.GROW, content_width=150, content_height=50)
 
-    child2 = Element(display=Display.CONTENT, content_width=150, content_height=50)
+    child2 = Element(display=Display.GROW, content_width=150, content_height=50)
 
-    child3 = Element(display=Display.CONTENT, content_width=150, content_height=50)
+    child3 = Element(display=Display.GROW, content_width=150, content_height=50)
 
     # Add children to root
     root.add_child(child1)
