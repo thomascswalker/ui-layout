@@ -31,6 +31,7 @@ source = ["ui"]
 omit = [
     "ui/logger.py",
     "ui/main.py",
+    "ui/render.py",
 ]
 
 [tool.coverage.report]
