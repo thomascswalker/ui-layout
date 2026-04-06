@@ -5,7 +5,7 @@ Processes the element tree and calculates positions and sizes based on
 display type and positioning rules.
 """
 
-from ui.types import Element, Display, Point, Position, Rect
+from ui.types import Element, Point, Rect
 import logging
 
 logger = logging.getLogger(__name__)

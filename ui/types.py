@@ -108,10 +108,6 @@ class Element(BaseModel):
     children: list[Element] = Field(default_factory=list)
     parent: Element | None = None
 
-    def __hash__(self) -> int:
-        """Make Element hashable using its id for dictionary keys."""
-        return hash(self.id)
-
     def add_child(self, child: Element) -> None:
         child.parent = self
         self.children.append(child)
@@ -126,15 +122,15 @@ class Element(BaseModel):
         """Parse an XML string to create an Element tree."""
 
         if isinstance(xml_string, str):
-            xml_element = ET.fromstring(xml_string)
+            xml = ET.fromstring(xml_string)
         else:
-            xml_element = xml_string
+            xml = xml_string
 
-        elem_id = xml_element.get("id", f"element_{id(xml_element)}")
-        display = Display(xml_element.get("display", "grow"))
-        position = Position(xml_element.get("position", "static"))
-        padding = float(xml_element.get("padding", 0.0))
-        border = float(xml_element.get("border", 0.0))
+        elem_id = xml.get("id", f"element_{id(xml)}")
+        display = Display(xml.get("display", "grow"))
+        position = Position(xml.get("position", "static"))
+        padding = float(xml.get("padding", 0.0))
+        border = float(xml.get("border", 0.0))
 
         element = cls(
             id=elem_id,
@@ -144,7 +140,7 @@ class Element(BaseModel):
             border=border,
         )
 
-        for child_xml in xml_element:
+        for child_xml in xml:
             child_element = Element.parse(child_xml)
             element.add_child(child_element)
 

@@ -1,4 +1,4 @@
 <div id="root" display="grow">
     <div id="child1" display="grow"/>
-    <div id="child2" display="grow"/>
+    <div id="child2" display="fixed"/>
 </div>
