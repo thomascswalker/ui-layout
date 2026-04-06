@@ -1,80 +1,108 @@
+from copy import deepcopy
+from pathlib import Path
+
 import pygame
-from ui.types import Element
+from pygame.color import Color
+from pygame.locals import RESIZABLE
+import logging
 
+from ui.layout import layout
+from ui.types import Element, Rect
 
-# Colors for visualization
-COLORS = {
-    "background": (240, 240, 240),
-    "border": (0, 0, 0),
-    "text": (50, 50, 50),
+logger = logging.getLogger(__name__)
+
+COLORS: dict[str, Color] = {
+    "background": Color(255, 255, 255),
+    "border": Color(0, 0, 0),
+    "text": Color(0, 0, 0),
 }
+DEPTH_COLORS: list[Color] = [
+    Color(100, 150, 200),  # Light blue
+    Color(150, 200, 100),  # Light green
+    Color(200, 150, 100),  # Light orange
+    Color(200, 100, 150),  # Light pink
+    Color(150, 150, 200),  # Lavender
+]
 
 # Configuration
 BORDER_WIDTH = 2
 MIN_WINDOW_WIDTH = 800
 MIN_WINDOW_HEIGHT = 600
+
+FONT: pygame.font.Font
 FONT_SIZE = 12
+FONT_FAMILY = "jetbrainsmono"
 
 
-def render(root: Element, title: str = "UI Layout Renderer") -> None:
-    """
-    Render a UI element tree to a window.
-
-    Args:
-        root: The root Element to render
-        title: Window title
-    """
+def render(root: Element, title: str) -> None:
+    logger.debug("Initializing Pygame...")
     pygame.init()
-    try:
-        # Calculate window dimensions based on root element size
-        window_width = max(int(root.rect.width) + 40, MIN_WINDOW_WIDTH)
-        window_height = max(int(root.rect.height) + 40, MIN_WINDOW_HEIGHT)
 
-        screen = pygame.display.set_mode((window_width, window_height))
-        pygame.display.set_caption(title)
+    # Calculate window dimensions based on root element size
+    window_width = MIN_WINDOW_WIDTH
+    window_height = MIN_WINDOW_HEIGHT
 
-        clock = pygame.time.Clock()
-        font = pygame.font.Font(None, FONT_SIZE)
+    screen = pygame.display.set_mode((window_width, window_height), RESIZABLE)
+    pygame.display.set_caption(title)
 
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+    clock = pygame.time.Clock()
+    global FONT
+    FONT = pygame.font.SysFont(FONT_FAMILY, FONT_SIZE)
 
-            # Draw background
-            screen.fill(COLORS["background"])
+    logger.debug("Starting render loop...")
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                logger.debug("Exiting render loop...")
+            if event.type == pygame.VIDEORESIZE:
+                window_width, window_height = event.size
+                screen = pygame.display.set_mode(
+                    (window_width, window_height), RESIZABLE
+                )
 
-            # Draw all elements recursively
-            _draw_element(screen, root, font)
+        # Draw background
+        screen.fill(COLORS["background"])
 
-            pygame.display.flip()
-            clock.tick(60)
+        # Layout all elements
+        layout(
+            root,
+            Rect(
+                x=0,
+                y=0,
+                width=window_width,
+                height=window_height,
+            ),
+        )
 
-    finally:
-        pygame.quit()
+        # Draw all elements recursively
+        render_element(screen, root)
+
+        pygame.display.flip()
+        clock.tick(60)
+    logger.debug("Exiting...")
 
 
-def _draw_element(
-    screen: pygame.Surface, element: Element, font: pygame.font.Font, level: int = 0
-) -> None:
-    """
-    Recursively draw an element and all its children.
+def _get_border_color(color: Color, level: int) -> Color:
+    border_color = deepcopy(color)
+    border_color.r = max(0, border_color.r - 50)
+    border_color.g = max(0, border_color.g - 50)
+    border_color.b = max(0, border_color.b - 50)
+    return border_color
 
-    Args:
-        screen: Pygame surface to draw on
-        element: Element to draw
-        font: Font for rendering element IDs
-        level: Depth level in the tree (for visual distinction)
-    """
+
+def render_element(screen: pygame.Surface, element: Element, level: int = 0) -> None:
     rect = element.rect
-    color = _get_color_for_level(level)
-    border_color = _get_border_color(color)
+
+    # Get the base color for this depth level and calculate a border color
+    base_color = DEPTH_COLORS[level % len(DEPTH_COLORS)]
+    border_color = _get_border_color(base_color, level)
 
     # Draw filled rectangle with main color
     pygame.draw.rect(
         screen,
-        color,
+        base_color,
         (rect.x, rect.y, rect.width, rect.height),
     )
 
@@ -88,64 +116,44 @@ def _draw_element(
 
     # Draw element ID as text (if large enough to fit text)
     if rect.width > 50 and rect.height > 30:
-        text_surface = font.render(element.id, True, COLORS["text"])
+        text_surface = FONT.render(element.id, True, COLORS["text"])
         text_rect = text_surface.get_rect()
         text_rect.topleft = (int(rect.x) + 5, int(rect.y) + 5)
         screen.blit(text_surface, text_rect)
 
     # Draw all children
     for child in element.children:
-        _draw_element(screen, child, font, level + 1)
+        render_element(screen, child, level + 1)
 
 
-def _get_color_for_level(level: int) -> tuple[int, int, int]:
-    """
-    Get a color based on tree depth to visually distinguish elements.
+def _find_file(filename: str) -> Path:
+    path = Path(filename)
+    if path.exists() and path.is_file():
+        return path
 
-    Args:
-        level: Depth level in the element tree
+    # Check in current directory
+    current_dir_path = Path.cwd()
+    pattern = f"**/{filename}"
+    if not pattern.endswith(".xml"):
+        pattern += ".xml"
+    xml_files = list(current_dir_path.glob(pattern))
+    if xml_files:
+        return xml_files[0]
 
-    Returns:
-        RGB color tuple
-    """
-    colors = [
-        (100, 150, 200),  # Light blue
-        (150, 200, 100),  # Light green
-        (200, 150, 100),  # Light orange
-        (200, 100, 150),  # Light pink
-        (150, 150, 200),  # Lavender
-    ]
-    return colors[level % len(colors)]
+    raise FileNotFoundError(
+        f"File '{filename}' not found in current directory or provided path."
+    )
 
 
-def _get_border_color(color: tuple[int, int, int]) -> tuple[int, int, int]:
-    """
-    Create a darker, more saturated version of the given color for borders.
+def render_file(filename: str) -> None:
+    logger.debug(f"Loading {filename}")
+    xml_path = _find_file(filename)
 
-    Args:
-        color: RGB color tuple
+    with open(xml_path, "r") as f:
+        xml_string = f.read()
 
-    Returns:
-        Darker, more saturated RGB color tuple
-    """
-    r, g, b = color
+    logger.debug("Parsing file...")
+    root_element = Element.parse(xml_string)
 
-    # Darken the color by reducing brightness
-    darken_factor = 0.6
-    r = int(r * darken_factor)
-    g = int(g * darken_factor)
-    b = int(b * darken_factor)
-
-    # Increase saturation by finding the max component and boosting it
-    max_val = max(r, g, b)
-    saturation_boost = 1.3
-
-    if max_val > 0:
-        if r == max_val:
-            r = min(255, int(r * saturation_boost))
-        elif g == max_val:
-            g = min(255, int(g * saturation_boost))
-        elif b == max_val:
-            b = min(255, int(b * saturation_boost))
-
-    return (r, g, b)
+    logger.debug("Rendering file...")
+    render(root_element, xml_path.stem)
