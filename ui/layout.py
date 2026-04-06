@@ -11,49 +11,43 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def layout(
-    root: Element,
-    available: Rect,
-) -> None:
-    # Apply padding to the available space for this element
-    available.x += root.padding
-    available.y += root.padding
-    available.width -= root.padding * 2
-    available.height -= root.padding * 2
-
-    # First calculate size based on display type and content
+def layout(root: Element, available: Rect) -> None:
+    # 1. First calculate size based on display type and content
     size(root, available)
 
-    # Then calculate position based on positioning rules
+    # 2. Then calculate position based on positioning rules
     position(root, available.min)
 
-    # Recursively layout children
-    dy = root.rect.y
+    # 3. Recursively layout children
+
+    dx = root.rect.x + root.padding  # Delta X
+    dy = root.rect.y + root.padding  # Delta Y
+    aw = root.rect.width - root.padding * 2  # Available Width
+    ah = root.rect.height - root.padding * 2  # Available Height
+
+    # Calculate available height for each child (if there are any children)
+    child_count = len(root.children)
+    if child_count > 0:
+        # 1. Compute the total gap height and subtract it from the available height
+        # 2. Divide the remaining height by the number of children to get the
+        # height per child
+        gap_height = ah - root.gap * (child_count - 1)
+        ah = gap_height / child_count
 
     for child in root.children:
-        layout(
-            child,
-            Rect(
-                root.rect.x,
-                dy,
-                root.rect.width,
-                root.rect.height / len(root.children),
-            ),
-        )
-        dy += child.rect.height
+        # Layout this child
+        layout(child, Rect(dx, dy, aw, ah))
+
+        # Move down the delta Y for the next child, accounting for the gap
+        dy += child.rect.height + root.gap
 
 
 def size(element: Element, available: Rect) -> None:
-    logger.info(f"Sizing element {element.id}")
-
     element.rect.width = available.width
     element.rect.height = available.height
 
 
-def position(
-    element: Element,
-    origin: Point,
-) -> None:
+def position(element: Element, origin: Point) -> None:
     # TODO: Implement relative, absolute, fixed positioning logic
     element.rect.x = origin.x
     element.rect.y = origin.y

@@ -28,6 +28,10 @@ log_level = "DEBUG"
 
 [tool.coverage.run]
 source = ["ui"]
+omit = [
+    "ui/logger.py",
+    "ui/main.py",
+]
 
 [tool.coverage.report]
 exclude_lines = [

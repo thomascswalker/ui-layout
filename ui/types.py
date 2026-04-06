@@ -102,6 +102,7 @@ class Element(BaseModel):
     # Sizing
     padding: float = Field(default=0.0, validation_alias=AliasChoices("padding", "p"))
     border: float = Field(default=0.0)
+    gap: float = Field(default=0.0)
 
     # Meta
     id: str = Field(default_factory=lambda: f"element_{id(object())}")
@@ -131,6 +132,7 @@ class Element(BaseModel):
         position = Position(xml.get("position", "static"))
         padding = float(xml.get("padding", 0.0))
         border = float(xml.get("border", 0.0))
+        gap = float(xml.get("gap", 0.0))
 
         element = cls(
             id=elem_id,
@@ -138,6 +140,7 @@ class Element(BaseModel):
             position=position,
             padding=padding,
             border=border,
+            gap=gap,
         )
 
         for child_xml in xml:

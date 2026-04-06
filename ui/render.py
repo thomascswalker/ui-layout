@@ -28,18 +28,13 @@ DEPTH_COLORS: list[Color] = [
 BORDER_WIDTH = 2
 MIN_WINDOW_WIDTH = 800
 MIN_WINDOW_HEIGHT = 600
-FONT_SIZE = 20
+
 FONT: pygame.font.Font
+FONT_SIZE = 12
+FONT_FAMILY = "jetbrainsmono"
 
 
-def render(root: Element, title: str = "UI Layout Renderer") -> None:
-    """
-    Render a UI element tree to a window.
-
-    Args:
-        root: The root Element to render
-        title: Window title
-    """
+def render(root: Element, title: str) -> None:
     logger.debug("Initializing Pygame...")
     pygame.init()
 
@@ -52,7 +47,7 @@ def render(root: Element, title: str = "UI Layout Renderer") -> None:
 
     clock = pygame.time.Clock()
     global FONT
-    FONT = pygame.font.Font(None, FONT_SIZE)
+    FONT = pygame.font.SysFont(FONT_FAMILY, FONT_SIZE)
 
     logger.debug("Starting render loop...")
     running = True
@@ -60,6 +55,7 @@ def render(root: Element, title: str = "UI Layout Renderer") -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                logger.debug("Exiting render loop...")
             if event.type == pygame.VIDEORESIZE:
                 window_width, window_height = event.size
                 screen = pygame.display.set_mode(
@@ -81,21 +77,27 @@ def render(root: Element, title: str = "UI Layout Renderer") -> None:
         )
 
         # Draw all elements recursively
-        draw_element(screen, root)
+        render_element(screen, root)
 
         pygame.display.flip()
         clock.tick(60)
+    logger.debug("Exiting...")
 
 
-def draw_element(screen: pygame.Surface, element: Element, level: int = 0) -> None:
+def _get_border_color(color: Color, level: int) -> Color:
+    border_color = deepcopy(color)
+    border_color.r = max(0, border_color.r - 50)
+    border_color.g = max(0, border_color.g - 50)
+    border_color.b = max(0, border_color.b - 50)
+    return border_color
+
+
+def render_element(screen: pygame.Surface, element: Element, level: int = 0) -> None:
     rect = element.rect
 
     # Get the base color for this depth level and calculate a border color
     base_color = DEPTH_COLORS[level % len(DEPTH_COLORS)]
-    border_color = deepcopy(base_color)
-    border_color.r = max(0, border_color.r - 50)
-    border_color.g = max(0, border_color.g - 50)
-    border_color.b = max(0, border_color.b - 50)
+    border_color = _get_border_color(base_color, level)
 
     # Draw filled rectangle with main color
     pygame.draw.rect(
@@ -121,20 +123,37 @@ def draw_element(screen: pygame.Surface, element: Element, level: int = 0) -> No
 
     # Draw all children
     for child in element.children:
-        draw_element(screen, child, level + 1)
+        render_element(screen, child, level + 1)
+
+
+def _find_file(filename: str) -> Path:
+    path = Path(filename)
+    if path.exists() and path.is_file():
+        return path
+
+    # Check in current directory
+    current_dir_path = Path.cwd()
+    pattern = f"**/{filename}"
+    if not pattern.endswith(".xml"):
+        pattern += ".xml"
+    xml_files = list(current_dir_path.glob(pattern))
+    if xml_files:
+        return xml_files[0]
+
+    raise FileNotFoundError(
+        f"File '{filename}' not found in current directory or provided path."
+    )
 
 
 def render_file(filename: str) -> None:
-    """Render a UI layout from an XML file."""
     logger.debug(f"Loading {filename}")
-    xml_path = Path(filename)
-    if not xml_path.exists():
-        raise FileNotFoundError("XML file not found")
-    if not xml_path.is_file():
-        raise ValueError("Provided path is not a file")
+    xml_path = _find_file(filename)
+
     with open(xml_path, "r") as f:
         xml_string = f.read()
+
     logger.debug("Parsing file...")
     root_element = Element.parse(xml_string)
+
     logger.debug("Rendering file...")
     render(root_element, xml_path.stem)

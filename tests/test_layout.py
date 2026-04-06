@@ -32,13 +32,14 @@ def test_layout_basic_sizing(root: Element):
 
 
 @pytest.mark.parametrize("padding", range(0, 25, 5))
-def test_layout_with_padding(root: Element, padding: float):
-    element = Element(padding=padding)
+def test_layout_with_padding(root: Element, padding: int):
+    root.padding = padding
+    element = Element()
     root.add_child(element)
     layout(root, root.rect)
 
-    assert element.rect.width == ROOT_WIDTH - (2 * padding)
-    assert element.rect.height == ROOT_HEIGHT - (2 * padding)
+    assert element.rect.width == root.rect.width - (padding * 2)
+    assert element.rect.height == root.rect.height - (padding * 2)
 
 
 @pytest.mark.parametrize("depth", range(1, 4))
