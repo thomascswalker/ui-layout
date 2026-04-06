@@ -1,3 +1,5 @@
+import pytest
+
 from ui.types import Element, Rect
 
 
@@ -35,3 +37,22 @@ def test_element_remove_child():
 
     assert child_element not in parent_element.children
     assert child_element.parent is None
+
+
+@pytest.mark.parametrize("xml_filename", ["basic.xml"])
+def test_element_parse(xml_filename: str):
+    with open(f"tests/fixtures/{xml_filename}", "r") as f:
+        xml_string = f.read()
+    root_element = Element.parse(xml_string)
+
+    assert root_element.id == "root"
+    assert root_element.display == "grow"
+    assert len(root_element.children) == 2
+
+    child1 = root_element.children[0]
+    assert child1.id == "child1"
+    assert child1.display == "grow"
+
+    child2 = root_element.children[1]
+    assert child2.id == "child2"
+    assert child2.display == "fixed"

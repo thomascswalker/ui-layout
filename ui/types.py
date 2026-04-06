@@ -1,5 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from enum import StrEnum
+import xml.etree.ElementTree as ET
+
+from pydantic import AliasChoices, BaseModel, Field
 
 SupportsArithmetic = float | int
 
@@ -33,9 +37,9 @@ class Rect:
 
     @property
     def center(self) -> Point:
-        center_x = self.x + self.width / 2.0
-        center_y = self.y + self.height / 2.0
-        return Point(center_x, center_y)
+        cx = self.x + self.width / 2.0
+        cy = self.y + self.height / 2.0
+        return Point(cx, cy)
 
     @property
     def min(self) -> Point:
@@ -76,16 +80,34 @@ class Rect:
         raise TypeError(f"Unsupported type for subtraction: {type(other)}")
 
 
-@dataclass(eq=True)
-class Element:
-    rect: Rect = field(default_factory=Rect)
-    id: str = field(default_factory=lambda: f"element_{id(object())}")
-    children: list[Element] = field(default_factory=list)
-    parent: Element | None = None
+class Display(StrEnum):
+    GROW = "grow"
+    FIXED = "fixed"
 
-    def __hash__(self) -> int:
-        """Make Element hashable using its id for dictionary keys."""
-        return hash(self.id)
+
+class Position(StrEnum):
+    STATIC = "static"
+    RELATIVE = "relative"
+    ABSOLUTE = "absolute"
+    FIXED = "fixed"
+
+
+class Element(BaseModel):
+    rect: Rect = Field(default_factory=Rect)
+
+    # Display and positioning
+    display: Display = Display.GROW
+    position: Position = Position.STATIC
+
+    # Sizing
+    padding: float = Field(default=0.0, validation_alias=AliasChoices("padding", "p"))
+    border: float = Field(default=0.0)
+    gap: float = Field(default=0.0)
+
+    # Meta
+    id: str = Field(default_factory=lambda: f"element_{id(object())}")
+    children: list[Element] = Field(default_factory=list)
+    parent: Element | None = None
 
     def add_child(self, child: Element) -> None:
         child.parent = self
@@ -95,3 +117,34 @@ class Element:
         if child in self.children:
             self.children.remove(child)
             child.parent = None
+
+    @classmethod
+    def parse(cls, xml_string: str | ET.Element) -> Element:
+        """Parse an XML string to create an Element tree."""
+
+        if isinstance(xml_string, str):
+            xml = ET.fromstring(xml_string)
+        else:
+            xml = xml_string
+
+        elem_id = xml.get("id", f"element_{id(xml)}")
+        display = Display(xml.get("display", "grow"))
+        position = Position(xml.get("position", "static"))
+        padding = float(xml.get("padding", 0.0))
+        border = float(xml.get("border", 0.0))
+        gap = float(xml.get("gap", 0.0))
+
+        element = cls(
+            id=elem_id,
+            display=display,
+            position=position,
+            padding=padding,
+            border=border,
+            gap=gap,
+        )
+
+        for child_xml in xml:
+            child_element = Element.parse(child_xml)
+            element.add_child(child_element)
+
+        return element

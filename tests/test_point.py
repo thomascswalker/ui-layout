@@ -1,3 +1,6 @@
+import pytest
+
+from tests.conftest import Operator
 from ui.types import Point
 
 
@@ -7,31 +10,34 @@ def test_point_create():
     assert p.y == 2
 
 
-def test_point_addition():
+@pytest.mark.parametrize(
+    "operator, other, result",
+    [
+        ("+", Point(3, 4), Point(4, 6)),
+        ("+", 3.0, Point(4, 5)),
+        ("-", Point(3, 4), Point(-2, -2)),
+        ("-", 3.0, Point(-2, -1)),
+    ],
+)
+def test_point_arithmetic(operator: Operator, other: Point | float, result: Point):
     p1 = Point(1, 2)
-    p2 = Point(3, 4)
-    result = p1 + p2
-    assert result.x == 4
-    assert result.y == 6
+    match operator:
+        case "+":
+            res = p1 + other
+        case "-":
+            res = p1 - other
+        case _:
+            pytest.fail(f"Unsupported operator: {operator}")
+    assert res.x == result.x
+    assert res.y == result.y
 
 
-def test_point_subtraction():
-    p1 = Point(1, 2)
-    p2 = Point(3, 4)
-    result = p1 - p2
-    assert result.x == -2
-    assert result.y == -2
-
-
-def test_point_addition_with_scalar():
+@pytest.mark.parametrize("operator", ["+", "-"])
+def test_point_arithmetic_invalid_type(operator: Operator):
     p = Point(1, 2)
-    result = p + 3
-    assert result.x == 4
-    assert result.y == 5
-
-
-def test_point_subtraction_with_scalar():
-    p = Point(1, 2)
-    result = p - 3
-    assert result.x == -2
-    assert result.y == -1
+    with pytest.raises(TypeError):
+        match operator:
+            case "+":
+                p + "invalid"  # type: ignore
+            case "-":
+                p - "invalid"  # type: ignore

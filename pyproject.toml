@@ -4,12 +4,39 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pydantic>=2.12.5",
+    "pygame-ce>=2.5.7",
+]
+
+[project.scripts]
+layout = "ui.main:main"
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff"]
+dev = ["pytest", "pytest-cov", "ruff"]
+
+[tool.uv]
+package = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra -q"
+addopts = "--cov=ui --cov-report=term-missing"
+log_cli = true
+log_cli_level = "INFO"
+log_level = "DEBUG"
+
+[tool.coverage.run]
+source = ["ui"]
+omit = [
+    "ui/logger.py",
+    "ui/main.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]

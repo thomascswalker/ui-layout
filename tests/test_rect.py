@@ -1,3 +1,6 @@
+import pytest
+
+from tests.conftest import Operator
 from ui.types import Rect, Point
 
 
@@ -29,21 +32,36 @@ def test_rect_center():
     assert center_point.y == 120
 
 
-def test_rect_addition():
+@pytest.mark.parametrize(
+    "operator, other, result",
+    [
+        ("+", Rect(5, 5, 50, 50), Rect(15, 25, 150, 250)),
+        ("+", 5.0, Rect(15, 25, 105, 205)),
+        ("-", Rect(5, 5, 50, 50), Rect(5, 15, 50, 150)),
+        ("-", 5.0, Rect(5, 15, 95, 195)),
+    ],
+)
+def test_rect_arithmetic(operator: Operator, other: Rect | float, result: Rect):
     rect1 = Rect(10, 20, 100, 200)
-    rect2 = Rect(5, 5, 50, 50)
-    result = rect1 + rect2
-    assert result.x == 15
-    assert result.y == 25
-    assert result.width == 150
-    assert result.height == 250
+    match operator:
+        case "+":
+            res = rect1 + other
+        case "-":
+            res = rect1 - other
+        case _:
+            pytest.fail(f"Unsupported operator: {operator}")
+    assert res.x == result.x
+    assert res.y == result.y
+    assert res.width == result.width
+    assert res.height == result.height
 
 
-def test_rect_subtraction():
-    rect1 = Rect(10, 20, 100, 200)
-    rect2 = Rect(5, 5, 50, 50)
-    result = rect1 - rect2
-    assert result.x == 5
-    assert result.y == 15
-    assert result.width == 50
-    assert result.height == 150
+@pytest.mark.parametrize("operator", ["+", "-"])
+def test_rect_arithmetic_invalid_type(operator: Operator):
+    rect = Rect(10, 20, 100, 200)
+    with pytest.raises(TypeError):
+        match operator:
+            case "+":
+                rect + "invalid"  # type: ignore
+            case "-":
+                rect - "invalid"  # type: ignore
