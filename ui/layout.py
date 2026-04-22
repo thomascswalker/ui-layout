@@ -1,4 +1,4 @@
-from ui.types import Element, Point, Rect
+from ui.types import Element, Rect
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,45 +26,54 @@ def layout(root: Element, available: Rect) -> None:
                 root.rect.width
     ```
     """
-    # 1. Calculate size
-    size(root, available)
+    # 1. Set the root element's size to the available space
+    root.rect.width = available.width
+    root.rect.height = available.height
 
-    # 2. Calculate position
-    position(root, available.min)
+    # 2. Set the root element's position to the top-left corner of the available
+    # space
+    root.rect.x = available.min.x
+    root.rect.y = available.min.y
 
-    # Calculate delta X and Y for child elements, starting from the top-left corner of
-    # the content area
-    dx = root.rect.x + root.padding  # Delta X
-    dy = root.rect.y + root.padding  # Delta Y
+    # 3. Layout each child element
 
-    # Calculate available width and height for children. Padding is subtracted from both sides,
-    # so we multiply by 2.
-    aw = root.rect.width - root.padding * 2  # Available Width
-    ah = root.rect.height - root.padding * 2  # Available Height
+    # 3.1. Calculate delta X/Y for child elements, starting from the
+    # top-left corner of the content area.
+    delta_x = root.rect.x + root.padding
+    delta_y = root.rect.y + root.padding
 
-    # Calculate available height for each child (if there are any children)
+    # 3.2. Calculate available width and height for children. Padding is
+    # subtracted from both sides, so we multiply by 2.
+    available_width = root.rect.width - (root.padding * 2)
+    available_height = root.rect.height - (root.padding * 2)
+
+    # 3.3. Calculate available height for each child (if there are any children)
     child_count = len(root.children)
+
+    # 3.4. If there are children and a gap is specified, we need to account for
+    # the total gap space between children.
     if child_count > 0:
-        # Compute the total gap height and subtract it from the available height
-        gap_height = ah - root.gap * (child_count - 1)
+        # Calculate total gap between children.
+        total_gap = root.gap * (child_count - 1)
 
-        # Divide the remaining height by the number of children to get the
-        # height per child
-        ah = gap_height / child_count
+        # Subtract the total gap from the available directional space, then
+        # divide the remaining space by the number of children to get the
+        # space per child.
+        match root.direction:
+            case "vertical":
+                available_height = (available_height - total_gap) / child_count
+            case "horizontal":
+                available_width = (available_width - total_gap) / child_count
 
+    # 3.5. Layout each child element, updating delta X/Y for the next child
+    # based on the layout direction.
     for child in root.children:
         # Layout this child
-        layout(child, Rect(dx, dy, aw, ah))
+        layout(child, Rect(delta_x, delta_y, available_width, available_height))
 
-        # Increase delta Y for the next child, accounting for the gap
-        dy += child.rect.height + root.gap
-
-
-def size(element: Element, available: Rect) -> None:
-    element.rect.width = available.width
-    element.rect.height = available.height
-
-
-def position(element: Element, origin: Point) -> None:
-    element.rect.x = origin.x
-    element.rect.y = origin.y
+        # Increase delta X/Y for the next child, accounting for the gap
+        match root.direction:
+            case "vertical":
+                delta_y += child.rect.height + root.gap
+            case "horizontal":
+                delta_x += child.rect.width + root.gap

@@ -18,6 +18,10 @@ dev = ["pytest", "pytest-cov", "ruff"]
 [tool.uv]
 package = true
 
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

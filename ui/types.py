@@ -8,6 +8,11 @@ from pydantic import AliasChoices, BaseModel, Field
 SupportsArithmetic = float | int
 
 
+DEFAULT_POSITION = "static"
+DEFAULT_DISPLAY = "grow"
+DEFAULT_DIRECTION = "vertical"
+
+
 @dataclass
 class Point:
     x: float = 0.0
@@ -81,8 +86,8 @@ class Rect:
 
 
 Display = Literal["grow", "fixed"]
-
 Position = Literal["static", "relative", "absolute", "fixed"]
+Direction = Literal["horizontal", "vertical"]
 
 
 class Element(BaseModel):
@@ -91,9 +96,13 @@ class Element(BaseModel):
     # Display and positioning
     display: Display = "grow"
     position: Position = "static"
+    direction: Direction = "vertical"
 
     # Sizing
-    padding: float = Field(default=0.0, validation_alias=AliasChoices("padding", "p"))
+    padding: float = Field(
+        default=0.0,
+        validation_alias=AliasChoices("padding", "p"),
+    )
     border: float = Field(default=0.0)
     gap: float = Field(default=0.0)
 
@@ -113,7 +122,7 @@ class Element(BaseModel):
 
     @classmethod
     def parse(cls, xml_string: str | ET.Element) -> Element:
-        """Parse an XML string to create an Element tree."""
+        """Parse an XML string to create an tree of `Element`s."""
 
         if isinstance(xml_string, str):
             xml = ET.fromstring(xml_string)
@@ -121,8 +130,9 @@ class Element(BaseModel):
             xml = xml_string
 
         element_id = xml.get("id", f"element_{id(xml)}")
-        display: Display = xml.get("display", "grow")  # type: ignore
-        position: Position = xml.get("position", "static")  # type: ignore
+        display: Display = xml.get("display", DEFAULT_DISPLAY)  # type: ignore
+        position: Position = xml.get("position", DEFAULT_POSITION)  # type: ignore
+        direction: Direction = xml.get("direction", DEFAULT_DIRECTION)  # type: ignore
         padding = float(xml.get("padding", 0.0))
         border = float(xml.get("border", 0.0))
         gap = float(xml.get("gap", 0.0))
@@ -131,6 +141,7 @@ class Element(BaseModel):
             id=element_id,
             display=display,
             position=position,
+            direction=direction,
             padding=padding,
             border=border,
             gap=gap,

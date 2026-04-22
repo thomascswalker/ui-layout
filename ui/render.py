@@ -17,11 +17,11 @@ COLORS: dict[str, Color] = {
     "text": Color(0, 0, 0),
 }
 DEPTH_COLORS: list[Color] = [
-    Color(100, 150, 200),  # Light blue
-    Color(150, 200, 100),  # Light green
-    Color(200, 150, 100),  # Light orange
-    Color(200, 100, 150),  # Light pink
-    Color(150, 150, 200),  # Lavender
+    Color(239, 68, 68),  # Red
+    Color(249, 155, 22),  # Orange
+    Color(234, 179, 8),  # Yellow
+    Color(34, 197, 94),  # Green
+    Color(59, 130, 246),  # Blue
 ]
 
 # Configuration
@@ -92,7 +92,11 @@ def _get_border_color(color: Color, level: int) -> Color:
     return border_color
 
 
-def render_element(screen: pygame.Surface, element: Element, level: int = 0) -> None:
+def render_element(
+    screen: pygame.Surface,
+    element: Element,
+    level: int = 0,
+) -> None:
     rect = element.rect
 
     # Get the base color for this depth level and calculate a border color
