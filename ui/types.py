@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from enum import StrEnum
+from typing import Literal
 import xml.etree.ElementTree as ET
 
 from pydantic import AliasChoices, BaseModel, Field
@@ -80,24 +80,17 @@ class Rect:
         raise TypeError(f"Unsupported type for subtraction: {type(other)}")
 
 
-class Display(StrEnum):
-    GROW = "grow"
-    FIXED = "fixed"
+Display = Literal["grow", "fixed"]
 
-
-class Position(StrEnum):
-    STATIC = "static"
-    RELATIVE = "relative"
-    ABSOLUTE = "absolute"
-    FIXED = "fixed"
+Position = Literal["static", "relative", "absolute", "fixed"]
 
 
 class Element(BaseModel):
     rect: Rect = Field(default_factory=Rect)
 
     # Display and positioning
-    display: Display = Display.GROW
-    position: Position = Position.STATIC
+    display: Display = "grow"
+    position: Position = "static"
 
     # Sizing
     padding: float = Field(default=0.0, validation_alias=AliasChoices("padding", "p"))
@@ -127,15 +120,15 @@ class Element(BaseModel):
         else:
             xml = xml_string
 
-        elem_id = xml.get("id", f"element_{id(xml)}")
-        display = Display(xml.get("display", "grow"))
-        position = Position(xml.get("position", "static"))
+        element_id = xml.get("id", f"element_{id(xml)}")
+        display: Display = xml.get("display", "grow")  # type: ignore
+        position: Position = xml.get("position", "static")  # type: ignore
         padding = float(xml.get("padding", 0.0))
         border = float(xml.get("border", 0.0))
         gap = float(xml.get("gap", 0.0))
 
         element = cls(
-            id=elem_id,
+            id=element_id,
             display=display,
             position=position,
             padding=padding,

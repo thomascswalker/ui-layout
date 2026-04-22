@@ -1,6 +1,6 @@
 import pytest
 
-from ui.types import Element, Rect, Display
+from ui.types import Element, Rect, DisplayType
 from ui.layout import layout
 
 ROOT_WIDTH = 640
@@ -10,7 +10,7 @@ ROOT_HEIGHT = 480
 @pytest.fixture
 def root() -> Element:
     return Element(
-        display=Display.FIXED,
+        display=DisplayType.FIXED,
         padding=0,
         border=0,
         rect=Rect(
