@@ -103,6 +103,10 @@ class Element(BaseModel):
         default=0.0,
         validation_alias=AliasChoices("padding", "p"),
     )
+    margin: float = Field(
+        default=0.0,
+        validation_alias=AliasChoices("margin", "m"),
+    )
     border: float = Field(default=0.0)
     gap: float = Field(default=0.0)
 
@@ -134,6 +138,7 @@ class Element(BaseModel):
         position: Position = xml.get("position", DEFAULT_POSITION)  # type: ignore
         direction: Direction = xml.get("direction", DEFAULT_DIRECTION)  # type: ignore
         padding = float(xml.get("padding", 0.0))
+        margin = float(xml.get("margin", 0.0))
         border = float(xml.get("border", 0.0))
         gap = float(xml.get("gap", 0.0))
 
@@ -143,6 +148,7 @@ class Element(BaseModel):
             position=position,
             direction=direction,
             padding=padding,
+            margin=margin,
             border=border,
             gap=gap,
         )

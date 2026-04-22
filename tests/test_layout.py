@@ -345,3 +345,39 @@ def test_layout_direction_with_gap(
             assert child.rect.x == current_x
             assert child.rect.y == 0
             current_x += child.rect.width + gap
+
+
+def test_layout_margin_reduces_parent_size_and_offsets_children(root: Element):
+    """Test that parent margin offsets the parent element within available space."""
+    root.margin = 10
+    child = Element()
+    root.add_child(child)
+
+    layout(root, root.rect)
+
+    # Parent is offset by its margin and sized to available minus margin
+    assert root.rect.x == 10
+    assert root.rect.y == 10
+    assert root.rect.width == ROOT_WIDTH - 20
+    assert root.rect.height == ROOT_HEIGHT - 20
+
+    # Child fills parent's content area (no padding, no child margin)
+    assert child.rect.x == 10
+    assert child.rect.y == 10
+    assert child.rect.width == ROOT_WIDTH - 20
+    assert child.rect.height == ROOT_HEIGHT - 20
+
+
+def test_layout_child_margin_applies_inside_available_space(root: Element):
+    """Test that child margin creates external space; child is positioned with margin offset."""
+    child = Element(margin=15)
+    root.add_child(child)
+
+    layout(root, root.rect)
+
+    # Child's rect is positioned accounting for its margin
+    # Margin is external space; child.rect is inside the margin
+    assert child.rect.x == 15
+    assert child.rect.y == 15
+    assert child.rect.width == ROOT_WIDTH - 30
+    assert child.rect.height == ROOT_HEIGHT - 30
