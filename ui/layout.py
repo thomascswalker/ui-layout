@@ -1,4 +1,4 @@
-from ui.types import Element, Rect
+from ui.types import Element, Point, Rect
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,71 +9,87 @@ def layout(root: Element, available: Rect) -> None:
     Layout the element and its children within the available space.
 
     ```
-    root.rect.x, root.rect.y (top-left origin)
+    root.rect.x,
+    root.rect.y
     ↓
-    ╭─ margin ────────────────────────────╮ ↑
-    │ ╭ border ─────────────────────────╮ │ │
-    │ │ ╭ padding ────────────────────╮ │ │ │
+    ╭─ root.margin ─────────────────────────╮
+    │ ╭ root.border ────────────────────╮ ↑ │
+    │ │ ╭ root.padding ───────────────╮ │ │ │
     │ │ │ ╭─────────────────────────╮ │ │ │ │
-    │ │ │ │                         │ │ │ │ │ root.rect.height
-    │ │ │ │        Content          │ │ │ │ │
-    │ │ │ │                         │ │ │ │ │
+    │ │ │ │                         │ │ │ │ ┆
+    │ │ │ │     child (content)     │ │ │ ├ root.rect.height
+    │ │ │ │                         │ │ │ │ ┆
     │ │ │ ╰─────────────────────────╯ │ │ │ │
     │ │ ╰─────────────────────────────╯ │ │ │
-    │ ╰─────────────────────────────────╯ │ │
-    ╰─────────────────────────────────────╯ ↓
-    ←─────────────────────────────────────→
-                root.rect.width
+    │ ╰─────────────────────────────────╯ ↓ │
+    │ ←─────────────────┬───────────────→   │
+    │           root.rect.width             │
+    ╰───────────────────────────────────────╯ ← root.rect.x + root.rect.width,
+                                                root.rect.y + root.rect.height
     ```
     """
-    # 1. Set the root element's size to the available space
-    root.rect.width = available.width
-    root.rect.height = available.height
+    # 1. Account for this element's margin when sizing and positioning
+    root.rect.width = available.width - (root.margin * 2)
+    root.rect.height = available.height - (root.margin * 2)
+    root.rect.x = available.min.x + root.margin
+    root.rect.y = available.min.y + root.margin
 
-    # 2. Set the root element's position to the top-left corner of the available
-    # space
-    root.rect.x = available.min.x
-    root.rect.y = available.min.y
+    # 2. Calculate the content area (inside padding)
 
-    # 3. Layout each child element
+    # 2.1. Start position for child elements
+    delta = Point(root.rect.x + root.padding, root.rect.y + root.padding)
 
-    # 3.1. Calculate delta X/Y for child elements, starting from the
-    # top-left corner of the content area.
-    delta_x = root.rect.x + root.padding
-    delta_y = root.rect.y + root.padding
+    # 2.2. Available space for children (content area)
+    content = Point(
+        root.rect.width - (root.padding * 2),
+        root.rect.height - (root.padding * 2),
+    )
 
-    # 3.2. Calculate available width and height for children. Padding is
-    # subtracted from both sides, so we multiply by 2.
-    available_width = root.rect.width - (root.padding * 2)
-    available_height = root.rect.height - (root.padding * 2)
-
-    # 3.3. Calculate available height for each child (if there are any children)
+    # 3. Layout children
     child_count = len(root.children)
 
-    # 3.4. If there are children and a gap is specified, we need to account for
-    # the total gap space between children.
-    if child_count > 0:
-        # Calculate total gap between children.
-        total_gap = root.gap * (child_count - 1)
+    # If no children, just return
+    if not child_count:
+        return
 
-        # Subtract the total gap from the available directional space, then
-        # divide the remaining space by the number of children to get the
-        # space per child.
-        match root.direction:
-            case "vertical":
-                available_height = (available_height - total_gap) / child_count
-            case "horizontal":
-                available_width = (available_width - total_gap) / child_count
+    # 3.1. Account for margin space used by all children
+    # Each child will use: size + (margin * 2)
+    total_margin = sum(child.margin * 2 for child in root.children)
+    total_gap = root.gap * (child_count - 1)
 
-    # 3.5. Layout each child element, updating delta X/Y for the next child
-    # based on the layout direction.
+    # 3.2. Remaining space after accounting for children's margins and gaps
+    match root.direction:
+        case "vertical":
+            remaining = content.y
+        case "horizontal":
+            remaining = content.x
+    remaining -= total_margin + total_gap
+
+    # 3.3. Distribute remaining space equally among children
+    match root.direction:
+        case "vertical":
+            content.y = remaining / child_count
+        case "horizontal":
+            content.x = remaining / child_count
+
+    # 3.4. Position each child with its own available space
     for child in root.children:
-        # Layout this child
-        layout(child, Rect(delta_x, delta_y, available_width, available_height))
+        # Child rect
+        child_available = Rect(delta.x, delta.y, content.x, content.y)
 
-        # Increase delta X/Y for the next child, accounting for the gap
+        # Calculate available space for this child, including its margin
         match root.direction:
             case "vertical":
-                delta_y += child.rect.height + root.gap
+                child_available.height = content.y + (child.margin * 2)
             case "horizontal":
-                delta_x += child.rect.width + root.gap
+                child_available.width = content.x + (child.margin * 2)
+
+        # Recursively layout the child
+        layout(child, child_available)
+
+        # Update position for next child
+        match root.direction:
+            case "vertical":
+                delta.y += child_available.height + root.gap
+            case "horizontal":
+                delta.x += child_available.width + root.gap

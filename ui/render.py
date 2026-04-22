@@ -150,8 +150,8 @@ def _find_file(filename: str) -> Path:
 
 
 def render_file(filename: str) -> None:
-    logger.debug(f"Loading {filename}")
     xml_path = _find_file(filename)
+    logger.debug(f"Loading {filename} from {xml_path}...")
 
     with open(xml_path, "r") as f:
         xml_string = f.read()
