@@ -3,6 +3,10 @@ on:
     branches: ["main"] # Trigger on pushes to your default branch
   workflow_dispatch:   # Allow manual triggers from the Actions tab
 
+permissions:
+  id-token: write
+  pages: write
+
 jobs:
   deploy:
     environment:
