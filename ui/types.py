@@ -20,6 +20,9 @@ class Point:
     x: float = 0.0
     y: float = 0.0
 
+    def __bool__(self):
+        return bool(self.x) or bool(self.y)
+
     def __add__(self, other: Point | SupportsArithmetic) -> Point:
         if isinstance(other, SupportsArithmetic):
             return Point(self.x + other, self.y + other)
@@ -32,6 +35,29 @@ class Point:
             return Point(self.x - other, self.y - other)
         if isinstance(other, Point):
             return Point(self.x - other.x, self.y - other.y)
+        raise TypeError(f"Unsupported type for subtraction: {type(other)}")
+
+
+@dataclass
+class Size:
+    w: float = 0.0
+    h: float = 0.0
+
+    def __bool__(self) -> bool:
+        return bool(self.w) or bool(self.h)
+
+    def __add__(self, other: Size | SupportsArithmetic) -> Size:
+        if isinstance(other, SupportsArithmetic):
+            return Size(self.w + other, self.h + other)
+        if isinstance(other, Size):
+            return Size(self.w + other.w, self.h + other.h)
+        raise TypeError(f"Unsupported type for addition: {type(other)}")
+
+    def __sub__(self, other: Size | SupportsArithmetic) -> Size:
+        if isinstance(other, SupportsArithmetic):
+            return Size(self.w - other, self.h - other)
+        if isinstance(other, Size):
+            return Size(self.w - other.w, self.h - other.h)
         raise TypeError(f"Unsupported type for subtraction: {type(other)}")
 
 
@@ -57,6 +83,24 @@ class Rect:
         max_x = self.x + self.width
         max_y = self.y + self.height
         return Point(max_x, max_y)
+
+    @property
+    def size(self) -> Size:
+        return Size(self.width, self.height)
+
+    @size.setter
+    def size(self, new_size: Size) -> None:
+        self.width = new_size.w
+        self.height = new_size.h
+
+    @property
+    def position(self) -> Point:
+        return Point(self.x, self.y)
+
+    @position.setter
+    def position(self, new_position: Point) -> None:
+        self.x = new_position.x
+        self.y = new_position.y
 
     def __add__(self, other: Rect | SupportsArithmetic) -> Rect:
         if isinstance(other, SupportsArithmetic):
@@ -94,6 +138,7 @@ Direction = Literal["horizontal", "vertical"]
 
 class Element(BaseModel):
     rect: Rect = Field(default_factory=Rect)
+    fixed_rect: Rect = Field(default_factory=Rect)
 
     # Display and positioning
     display: Display = "grow"
@@ -116,6 +161,17 @@ class Element(BaseModel):
     id: str = Field(default_factory=lambda: f"element_{id(object())}")
     children: list[Element] = Field(default_factory=list)
     parent: Element | None = None
+
+    def fixed(self) -> Size:
+        if not self.display == "fixed":
+            return Size(0.0, 0.0)
+        return self.fixed_rect.size
+
+    def grow(self, available: Rect) -> Size:
+        return Size(
+            available.width - (self.margin * 2),
+            available.height - (self.margin * 2),
+        )
 
     def add_child(self, child: Element) -> None:
         child.parent = self
@@ -147,8 +203,6 @@ class Element(BaseModel):
             style = parse_style(str(style_attr))
 
         element_id = str(html.get("id", f"element_{id(html)}"))
-
-        # Get values from style or fall back to individual attributes
         display = style.get("display", DEFAULT_DISPLAY)
         position = style.get("position", DEFAULT_POSITION)
         direction = style.get("direction", DEFAULT_DIRECTION)
@@ -156,6 +210,9 @@ class Element(BaseModel):
         margin = float(style.get("margin", 0.0))
         border = float(style.get("border", 0.0))
         gap = float(style.get("gap", 0.0))
+
+        fixed_width = float(style.get("width", 0.0))
+        fixed_height = float(style.get("height", 0.0))
 
         element = cls(
             id=element_id,
@@ -166,6 +223,7 @@ class Element(BaseModel):
             margin=margin,
             border=border,
             gap=gap,
+            fixed_rect=Rect(width=fixed_width, height=fixed_height),
         )
 
         for child_html in html.find_all(recursive=False):

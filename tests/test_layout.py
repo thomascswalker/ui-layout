@@ -381,3 +381,284 @@ def test_layout_child_margin_applies_inside_available_space(root: Element):
     assert child.rect.y == 15
     assert child.rect.width == ROOT_WIDTH - 30
     assert child.rect.height == ROOT_HEIGHT - 30
+
+
+def test_layout_fixed_size_single_element(root: Element):
+    """Test that a single fixed-size element uses its specified dimensions."""
+    fixed_width = 200.0
+    fixed_height = 150.0
+    element = Element(
+        display="fixed",
+        fixed_rect=Rect(width=fixed_width, height=fixed_height),
+    )
+    root.add_child(element)
+    layout(root, root.rect)
+
+    # Fixed element should use specified dimensions
+    assert element.rect.width == fixed_width
+    assert element.rect.height == fixed_height
+    # Position should account for margin (0 by default)
+    assert element.rect.x == 0
+    assert element.rect.y == 0
+
+
+def test_layout_fixed_size_element_with_margin(root: Element):
+    """Test that fixed-size element respects margin for positioning."""
+    margin = 20.0
+    fixed_width = 200.0
+    fixed_height = 150.0
+    element = Element(
+        display="fixed",
+        margin=margin,
+        fixed_rect=Rect(width=fixed_width, height=fixed_height),
+    )
+    root.add_child(element)
+    layout(root, root.rect)
+
+    # Fixed element should use specified dimensions
+    assert element.rect.width == fixed_width
+    assert element.rect.height == fixed_height
+    # Position should be offset by margin
+    assert element.rect.x == margin
+    assert element.rect.y == margin
+
+
+def test_layout_fixed_and_grow_vertical(root: Element):
+    """Test layout with mix of fixed and grow elements vertically."""
+    root.direction = "vertical"
+
+    fixed_element = Element(
+        display="fixed",
+        fixed_rect=Rect(width=ROOT_WIDTH, height=100.0),
+    )
+    grow_element = Element(display="grow")
+
+    root.add_child(fixed_element)
+    root.add_child(grow_element)
+    layout(root, root.rect)
+
+    # Fixed element keeps its size
+    assert fixed_element.rect.width == ROOT_WIDTH
+    assert fixed_element.rect.height == 100.0
+    assert fixed_element.rect.y == 0
+
+    # Grow element gets remaining space
+    remaining_height = ROOT_HEIGHT - 100.0
+    assert grow_element.rect.width == ROOT_WIDTH
+    assert grow_element.rect.height == remaining_height
+    assert grow_element.rect.y == 100.0
+
+
+def test_layout_fixed_and_grow_horizontal(root: Element):
+    """Test layout with mix of fixed and grow elements horizontally."""
+    root.direction = "horizontal"
+
+    fixed_element = Element(
+        display="fixed",
+        fixed_rect=Rect(width=200.0, height=ROOT_HEIGHT),
+    )
+    grow_element = Element(display="grow")
+
+    root.add_child(fixed_element)
+    root.add_child(grow_element)
+    layout(root, root.rect)
+
+    # Fixed element keeps its size
+    assert fixed_element.rect.width == 200.0
+    assert fixed_element.rect.height == ROOT_HEIGHT
+    assert fixed_element.rect.x == 0
+
+    # Grow element gets remaining space
+    remaining_width = ROOT_WIDTH - 200.0
+    assert grow_element.rect.width == remaining_width
+    assert grow_element.rect.height == ROOT_HEIGHT
+    assert grow_element.rect.x == 200.0
+
+
+def test_layout_multiple_fixed_elements_vertical(root: Element):
+    """Test multiple fixed-size elements stacked vertically."""
+    root.direction = "vertical"
+
+    fixed1 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=ROOT_WIDTH, height=100.0),
+    )
+    fixed2 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=ROOT_WIDTH, height=150.0),
+    )
+
+    root.add_child(fixed1)
+    root.add_child(fixed2)
+    layout(root, root.rect)
+
+    # Both fixed elements maintain their sizes
+    assert fixed1.rect.width == ROOT_WIDTH
+    assert fixed1.rect.height == 100.0
+    assert fixed1.rect.y == 0
+
+    assert fixed2.rect.width == ROOT_WIDTH
+    assert fixed2.rect.height == 150.0
+    assert fixed2.rect.y == 100.0
+
+
+def test_layout_multiple_fixed_elements_horizontal(root: Element):
+    """Test multiple fixed-size elements arranged horizontally."""
+    root.direction = "horizontal"
+
+    fixed1 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=150.0, height=ROOT_HEIGHT),
+    )
+    fixed2 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=200.0, height=ROOT_HEIGHT),
+    )
+
+    root.add_child(fixed1)
+    root.add_child(fixed2)
+    layout(root, root.rect)
+
+    # Both fixed elements maintain their sizes
+    assert fixed1.rect.width == 150.0
+    assert fixed1.rect.height == ROOT_HEIGHT
+    assert fixed1.rect.x == 0
+
+    assert fixed2.rect.width == 200.0
+    assert fixed2.rect.height == ROOT_HEIGHT
+    assert fixed2.rect.x == 150.0
+
+
+def test_layout_fixed_parent_with_grow_children(root: Element):
+    """Test fixed-size parent containing grow children."""
+    fixed_parent = Element(
+        display="fixed",
+        direction="vertical",
+        fixed_rect=Rect(width=400.0, height=300.0),
+    )
+
+    child1 = Element(display="grow")
+    child2 = Element(display="grow")
+
+    fixed_parent.add_child(child1)
+    fixed_parent.add_child(child2)
+    root.add_child(fixed_parent)
+
+    layout(root, root.rect)
+
+    # Parent keeps its fixed size
+    assert fixed_parent.rect.width == 400.0
+    assert fixed_parent.rect.height == 300.0
+
+    # Children grow to fill parent's space equally
+    expected_height = 300.0 / 2
+    assert child1.rect.width == 400.0
+    assert child1.rect.height == expected_height
+    assert child2.rect.width == 400.0
+    assert child2.rect.height == expected_height
+
+
+def test_layout_fixed_element_with_padding(root: Element):
+    """Test fixed-size element that respects padding on parent."""
+    root.padding = 20.0
+
+    fixed_element = Element(
+        display="fixed",
+        fixed_rect=Rect(width=200.0, height=150.0),
+    )
+    root.add_child(fixed_element)
+    layout(root, root.rect)
+
+    # Fixed element should position inside padding
+    assert fixed_element.rect.x == root.padding
+    assert fixed_element.rect.y == root.padding
+    # Fixed element size is not affected by parent padding
+    assert fixed_element.rect.width == 200.0
+    assert fixed_element.rect.height == 150.0
+
+
+def test_layout_fixed_with_gap_vertical(root: Element):
+    """Test fixed elements with gap between them (vertical)."""
+    root.direction = "vertical"
+    root.gap = 15.0
+
+    fixed1 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=ROOT_WIDTH, height=100.0),
+    )
+    fixed2 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=ROOT_WIDTH, height=120.0),
+    )
+
+    root.add_child(fixed1)
+    root.add_child(fixed2)
+    layout(root, root.rect)
+
+    # Both maintain their sizes
+    assert fixed1.rect.height == 100.0
+    assert fixed2.rect.height == 120.0
+
+    # Gap is respected between elements
+    assert fixed1.rect.y == 0
+    assert fixed2.rect.y == 100.0 + root.gap
+
+
+def test_layout_fixed_with_gap_horizontal(root: Element):
+    """Test fixed elements with gap between them (horizontal)."""
+    root.direction = "horizontal"
+    root.gap = 20.0
+
+    fixed1 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=150.0, height=ROOT_HEIGHT),
+    )
+    fixed2 = Element(
+        display="fixed",
+        fixed_rect=Rect(width=180.0, height=ROOT_HEIGHT),
+    )
+
+    root.add_child(fixed1)
+    root.add_child(fixed2)
+    layout(root, root.rect)
+
+    # Both maintain their sizes
+    assert fixed1.rect.width == 150.0
+    assert fixed2.rect.width == 180.0
+
+    # Gap is respected between elements
+    assert fixed1.rect.x == 0
+    assert fixed2.rect.x == 150.0 + root.gap
+
+
+def test_layout_three_fixed_grow_mix_vertical(root: Element):
+    """Test mixed fixed and grow elements in vertical layout."""
+    root.direction = "vertical"
+
+    fixed_top = Element(
+        display="fixed",
+        fixed_rect=Rect(width=ROOT_WIDTH, height=80.0),
+    )
+    grow_middle = Element(display="grow")
+    fixed_bottom = Element(
+        display="fixed",
+        fixed_rect=Rect(width=ROOT_WIDTH, height=60.0),
+    )
+
+    root.add_child(fixed_top)
+    root.add_child(grow_middle)
+    root.add_child(fixed_bottom)
+    layout(root, root.rect)
+
+    # Fixed elements keep their sizes
+    assert fixed_top.rect.height == 80.0
+    assert fixed_bottom.rect.height == 60.0
+
+    # Grow element gets remaining space
+    remaining = ROOT_HEIGHT - 80.0 - 60.0
+    assert grow_middle.rect.height == remaining
+
+    # Positions are correct
+    assert fixed_top.rect.y == 0
+    assert grow_middle.rect.y == 80.0
+    assert fixed_bottom.rect.y == 80.0 + remaining
