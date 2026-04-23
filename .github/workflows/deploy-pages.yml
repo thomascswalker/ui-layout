@@ -1,11 +1,14 @@
+name: Deploy to GitHub Pages
+
 on:
   push:
-    branches: ["main"] # Trigger on pushes to your default branch
-  workflow_dispatch:   # Allow manual triggers from the Actions tab
+    branches: ["main"]
+  workflow_dispatch: true
 
 permissions:
-  id-token: write
+  contents: read
   pages: write
+  id-token: write
 
 jobs:
   deploy:
@@ -20,12 +23,10 @@ jobs:
       - name: Setup Pages ⚙️
         uses: actions/configure-pages@v5
 
-      # Add your build steps here (e.g., npm run build)
-
       - name: Upload artifact ⬆️
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # Change this to your build output folder (e.g., './dist')
+          path: './docs' 
 
       - name: Deploy to GitHub Pages 🚀
         id: deployment
