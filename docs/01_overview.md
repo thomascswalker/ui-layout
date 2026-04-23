@@ -8,22 +8,7 @@ and leaves of the tree reperesenting the various elements within a GUI.
 <div style="display: flex;">
   <div style="flex: 1; padding-right: 10px;">
     
-```mermaid
-graph TD
-
-A[Root] --> C1
-A --> C2
-C1[Frame]
-C2[Text]
-
-C1 --> C3
-C1 --> C4
-C1 --> C5
-
-C3[Text]
-C4[Dropdown]
-C5[Button]
-```
+![element_hierarchy](images/element_hierarchy.svg)
 
   </div>
   <div style="flex: 1; padding-left: 10px;">
