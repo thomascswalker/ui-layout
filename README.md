@@ -4,6 +4,8 @@
 
 Algorithms for laying out GUI elements, written in Python for simplicity. Uses `pygame` to render GUIs.
 
+![Example Image](images/example.png)
+
 ## Rendering
 
 1. `uv venv`
