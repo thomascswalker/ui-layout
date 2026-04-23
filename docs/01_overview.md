@@ -28,7 +28,7 @@ C5[Button]
   </div>
   <div style="flex: 1; padding-left: 10px;">
 
-![element_gui](element_gui.svg)
+![element_gui](images/element_gui.svg)
 
   </div>
 </div>
@@ -39,4 +39,4 @@ C5[Button]
 An element is node within the GUI tree. It is most commonly represented 
 rectangularly.
 
-![element_diagram](element_diagram.svg)
+![element_diagram](images/element_diagram.svg)
