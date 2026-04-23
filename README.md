@@ -15,7 +15,7 @@ At this point you can run the simple CLI renderer.
 4. `layout <name>`
 
 > [!TIP]
-> Example .xml files can be found in `tests/fixtures/`.
+> Example .html files can be found in `tests/fixtures/`.
 
 ## AI Usage
 
