@@ -138,8 +138,8 @@ def _find_file(filename: str) -> Path:
     # Check in current directory
     current_dir_path = Path.cwd()
     pattern = f"**/{filename}"
-    if not pattern.endswith(".xml"):
-        pattern += ".xml"
+    if not pattern.endswith(".html"):
+        pattern += ".html"
     xml_files = list(current_dir_path.glob(pattern))
     if xml_files:
         return xml_files[0]
