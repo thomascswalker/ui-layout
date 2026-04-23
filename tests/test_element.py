@@ -39,7 +39,7 @@ def test_element_remove_child():
     assert child_element.parent is None
 
 
-@pytest.mark.parametrize("xml_filename", ["basic.xml"])
+@pytest.mark.parametrize("xml_filename", ["basic.html"])
 def test_element_parse(xml_filename: str):
     with open(f"tests/fixtures/{xml_filename}", "r") as f:
         xml_string = f.read()
@@ -55,4 +55,4 @@ def test_element_parse(xml_filename: str):
 
     child2 = root_element.children[1]
     assert child2.id == "child2"
-    assert child2.display == "fixed"
+    assert child2.display == "grow"

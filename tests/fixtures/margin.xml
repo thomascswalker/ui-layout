@@ -1,8 +1,0 @@
-<div id="root" padding="25" gap="25">
-    <div id="child1" margin="15"/>
-    <div id="child2" padding="25" gap="25">
-        <div id="child2-1" margin="10"/>
-        <div id="child2-2" margin="5"/>
-        <div id="child2-3"/>
-    </div>
-</div>

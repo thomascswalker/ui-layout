@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
-import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup, Tag
 
 from pydantic import AliasChoices, BaseModel, Field
 
@@ -124,23 +124,56 @@ class Element(BaseModel):
             self.children.remove(child)
             child.parent = None
 
+    @staticmethod
+    def _parse_style(style_str: str) -> dict[str, str]:
+        """Parse a CSS style string into a dictionary of property-value pairs."""
+        if not style_str:
+            return {}
+
+        styles = {}
+        # Split by semicolon and strip whitespace
+        for declaration in style_str.split(";"):
+            declaration = declaration.strip()
+            if ":" in declaration:
+                prop, value = declaration.split(":", 1)
+                styles[prop.strip()] = value.strip()
+        return styles
+
     @classmethod
-    def parse(cls, xml_string: str | ET.Element) -> Element:
-        """Parse an XML string to create an tree of `Element`s."""
+    def parse(cls, xml_string: str | Tag) -> Element:
+        """Parse an HTML string to create a tree of `Element`s."""
 
         if isinstance(xml_string, str):
-            xml = ET.fromstring(xml_string)
+            soup = BeautifulSoup(xml_string, "html.parser")
+            html = soup.find()  # Get the first element
         else:
-            xml = xml_string
+            html = xml_string
 
-        element_id = xml.get("id", f"element_{id(xml)}")
-        display: Display = xml.get("display", DEFAULT_DISPLAY)  # type: ignore
-        position: Position = xml.get("position", DEFAULT_POSITION)  # type: ignore
-        direction: Direction = xml.get("direction", DEFAULT_DIRECTION)  # type: ignore
-        padding = float(xml.get("padding", 0.0))
-        margin = float(xml.get("margin", 0.0))
-        border = float(xml.get("border", 0.0))
-        gap = float(xml.get("gap", 0.0))
+        if html is None:
+            raise ValueError("No valid HTML element found in the input string.")
+
+        # Parse style attribute if present
+        style_dict = {}
+        style_attr = html.get("style")
+        if style_attr:
+            style_dict = cls._parse_style(str(style_attr))
+
+        element_id = str(html.get("id", f"element_{id(html)}"))  # type: ignore
+
+        # Get values from style or fall back to individual attributes
+        display: Display = style_dict.get(
+            "display", html.get("display", DEFAULT_DISPLAY)
+        )  # type: ignore
+        position: Position = style_dict.get(
+            "position", html.get("position", DEFAULT_POSITION)
+        )  # type: ignore
+        direction: Direction = style_dict.get(
+            "direction", html.get("direction", DEFAULT_DIRECTION)
+        )  # type: ignore
+        padding = float(style_dict.get("padding", html.get("padding", 0.0)))  # type: ignore
+        margin = float(style_dict.get("margin", html.get("margin", 0.0)))  # type: ignore
+        border = float(style_dict.get("border", html.get("border", 0.0)))  # type: ignore
+        gap = float(style_dict.get("gap", html.get("gap", 0.0)))  # type: ignore
 
         element = cls(
             id=element_id,
@@ -153,7 +186,7 @@ class Element(BaseModel):
             gap=gap,
         )
 
-        for child_xml in xml:
+        for child_xml in html.find_all(recursive=False):
             child_element = Element.parse(child_xml)
             element.add_child(child_element)
 
