@@ -109,8 +109,10 @@ def _render_element(
 
     # Draw element ID as text (if large enough to fit text)
     if rect.width > 50 and rect.height > 30:
+        pos_text = f"{int(element.rect.x)}x, {int(element.rect.y)}y"
+        size_text = f"{int(element.rect.width)}w, {int(element.rect.height)}h"
         text_surface = FONT.render(
-            f"{element.id} ({int(element.rect.width)}x{int(element.rect.height)})",
+            f"{element.id}\n[{pos_text}], [{size_text}]",
             True,
             COLORS["text"],
         )

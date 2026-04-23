@@ -14,6 +14,8 @@ DEFAULT_POSITION = "static"
 DEFAULT_DISPLAY = "grow"
 DEFAULT_DIRECTION = "vertical"
 
+INHERITED_PROPS = ("padding", "margin", "gap")
+
 
 @dataclass
 class Point:
@@ -202,32 +204,43 @@ class Element(BaseModel):
         if style_attr := html.get("style"):
             style = parse_style(str(style_attr))
 
-        element_id = str(html.get("id", f"element_{id(html)}"))
+        element_id = html.get("id", f"element_{id(html)}")
         display = style.get("display", DEFAULT_DISPLAY)
         position = style.get("position", DEFAULT_POSITION)
         direction = style.get("direction", DEFAULT_DIRECTION)
-        padding = float(style.get("padding", 0.0))
-        margin = float(style.get("margin", 0.0))
-        border = float(style.get("border", 0.0))
-        gap = float(style.get("gap", 0.0))
+        padding = style.get("padding", 0.0)
+        margin = style.get("margin", 0.0)
+        border = style.get("border", 0.0)
+        gap = style.get("gap", 0.0)
 
-        fixed_width = float(style.get("width", 0.0))
-        fixed_height = float(style.get("height", 0.0))
+        width = style.get("width", 0.0)
+        height = style.get("height", 0.0)
 
         element = cls(
-            id=element_id,
+            id=element_id,  # type: ignore
             display=display,  # type: ignore
             position=position,  # type: ignore
             direction=direction,  # type: ignore
-            padding=padding,
-            margin=margin,
-            border=border,
-            gap=gap,
-            fixed_rect=Rect(width=fixed_width, height=fixed_height),
+            padding=float(padding),
+            margin=float(margin),
+            border=float(border),
+            gap=float(gap),
+            fixed_rect=Rect(
+                width=float(width),
+                height=float(height),
+            ),
         )
 
         for child_html in html.find_all(recursive=False):
-            child_element = Element.parse(child_html)
-            element.add_child(child_element)
+            child = Element.parse(child_html)
+
+            # Inherit parent's properties
+            for attr in INHERITED_PROPS:
+                child_value: float = getattr(child, attr, 0.0)
+                parent_value: float = getattr(element, attr, 0.0)
+                if child_value == 0 and parent_value != 0.0:
+                    setattr(child, attr, parent_value)
+
+            element.add_child(child)
 
         return element
