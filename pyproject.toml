@@ -1,6 +1,6 @@
 [project]
 name = "ui-layout"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -18,6 +18,9 @@ dev = ["pytest", "pytest-cov", "ruff"]
 
 [tool.uv]
 package = true
+
+[tool.setuptools]
+packages = ["ui"]
 
 [tool.ruff]
 line-length = 88
