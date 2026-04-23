@@ -1,0 +1,34 @@
+<svg width="360" height="260" xmlns="http://www.w3.org/2000/svg"
+    xmlns:svg="http://www.w3.org/2000/svg">
+    <style>.window { fill: #ffffff; stroke: #333; stroke-width: 2px; }
+    .frame { fill: #f7f7f7; stroke: #666; stroke-width: 1.5px; }
+    .control { fill: #e6e6e6; stroke: #444; stroke-width: 1px; }
+    .dropdown { fill: #e6e6e6; stroke: #444; stroke-width: 1px; }
+    .button { fill: #d0e6ff; stroke: #2b6cb0; stroke-width: 1px; }
+    .label { font-family: Arial, sans-serif; font-size: 12px; fill: #000; }</style>
+    <!-- Root Window -->
+    <!-- Standalone Text -->
+    <!-- Frame -->
+    <!-- Text inside Frame -->
+    <!-- Dropdown -->
+    <!-- Button -->
+    <g class="layer">
+        <title>Layer 1</title>
+        <rect class="window" height="240" id="svg_1" width="340" x="10" y="10" />
+        <text class="label" font-family="Monospace" font-size="12" id="svg_2" style="cursor: move;"
+            transform="matrix(1 0 0 1 1.3245 2.64901)" x="20" y="28">Root</text>
+        <text class="label" font-family="Monospace" font-size="12" id="svg_3"
+            transform="matrix(1 0 0 1 -18.1015 9.27152)" x="240" y="50">Text</text>
+        <rect class="frame" height="170" id="svg_4" width="180" x="30" y="50" />
+        <text class="label" font-family="Monospace" font-size="12" id="svg_5" stroke-width="0"
+            x="40" y="68">Frame</text>
+        <text class="label" font-family="Monospace" font-size="12" id="svg_7"
+            transform="matrix(1 0 0 1 -10.596 2.20751)" x="60" y="96">Text</text>
+        <rect class="dropdown" height="25" id="svg_8" width="140" x="50" y="115" />
+        <text class="label" font-family="Monospace" font-size="12" id="svg_9" x="60" y="131">Dropdown
+            ▼</text>
+        <rect class="button" height="30" id="svg_10" width="140" x="50" y="150" />
+        <text class="label" font-family="Monospace" font-size="12" id="svg_11" text-anchor="middle"
+            transform="matrix(1 0 0 1 26.4901 -2.20751)" x="95" y="170">Button</text>
+    </g>
+</svg>

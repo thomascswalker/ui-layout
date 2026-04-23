@@ -1,0 +1,104 @@
+<svg width="1280" height="720" xmlns="http://www.w3.org/2000/svg"
+    xmlns:svg="http://www.w3.org/2000/svg">
+    <defs>
+        <style type="text/css">
+   <![CDATA[
+      .margin-fill { fill: #ffc283; }
+      .border-fill { fill: #ffd47b; }
+      .padding-fill { fill: #c3d478; }
+      .content-fill { fill: #6dd9f3; }
+      .text-black { fill: #000, font-size: 12px; }
+      .stroke-white { stroke: #fff; }
+      .arrow-stroke { stroke: #222; }
+      .arrowhead { fill: #222; }
+    ]]>
+  </style>
+        <marker id="mkr_end_svg_27" markerHeight="5" markerUnits="strokeWidth" markerWidth="5"
+            orient="auto" refX="50" refY="50" se_type="rightarrow" viewBox="0 0 100 100">
+            <path d="m100,50l-100,40l30,-40l-30,-40z" stroke-width="10" />
+        </marker>
+        <marker id="mkr_start_svg_27" markerHeight="5" markerUnits="strokeWidth" markerWidth="5"
+            orient="auto" refX="50" refY="50" se_type="leftarrow" viewBox="0 0 100 100">
+            <path d="m0,50l100,40l-30,-40l30,-40z" stroke-width="10" />
+        </marker>
+        <marker id="mkr_start_svg_29" markerHeight="5" markerUnits="strokeWidth" markerWidth="5"
+            orient="auto" refX="50" refY="50" se_type="leftarrow" viewBox="0 0 100 100">
+            <path d="m0,50l100,40l-30,-40l30,-40z" stroke-width="10" />
+        </marker>
+        <marker id="mkr_end_svg_29" markerHeight="5" markerUnits="strokeWidth" markerWidth="5"
+            orient="auto" refX="50" refY="50" se_type="rightarrow" viewBox="0 0 100 100">
+            <path d="m100,50l-100,40l30,-40l-30,-40z" stroke-width="10" />
+        </marker>
+    </defs>
+    <g class="layer" display="inline">
+        <title>Layer 1</title>
+        <rect fill="white" height="400" id="svg_40" width="800" x="0" y="0" />
+        <path class="margin-fill" d="m27,8l340,0l0,280l-340,0l0,-280z" id="svg_3"
+            transform="matrix(1 0 0 1 185 50)" />
+        <path class="border-fill" d="m57,38l280,0l0,220l-280,0l0,-220z" id="svg_4"
+            transform="matrix(1 0 0 1 185 50)" />
+        <path class="padding-fill" d="m87,68l220,0l0,160l-220,0l0,-160z" id="svg_5"
+            transform="matrix(1 0 0 1 185 50)" />
+        <path class="content-fill" d="m127,98l140,0l0,100l-140,0l0,-100z" id="svg_6"
+            transform="matrix(1 0 0 1 185 50)" />
+        <text class="text-black" id="svg_7" text-anchor="middle" transform="matrix(1 0 0 1 182 28)"
+            x="200" y="170">content</text>
+        <path class="arrow-stroke" d="m137,188l120,0" fill="none" id="svg_8" marker-end="url(#a)"
+            marker-start="url(#a)" transform="matrix(1 0 0 1 185 50)" />
+        <text class="text-black" id="svg_9" text-anchor="middle" transform="matrix(1 0 0 1 182 28)"
+            x="200" y="225">width</text>
+        <path class="arrow-stroke" d="m257,108l0,80" fill="none" id="svg_10" marker-end="url(#a)"
+            marker-start="url(#a)" transform="matrix(1 0 0 1 185 50)" />
+        <text class="text-black" id="svg_11" text-anchor="middle"
+            transform="matrix(0 -1 1 0 287 473)" x="275" y="170">height</text>
+        <path class="margin-fill" d="m27,8l340,0l0,280l-340,0l0,-280z" id="svg_22" stroke="#000000"
+            stroke-dasharray="2" transform="matrix(1 0 0 1 185 50)" />
+        <path class="border-fill" d="m57,38l280,0l0,220l-280,0l0,-220z" id="svg_23" stroke="#000000"
+            transform="matrix(1 0 0 1 185 50)" />
+        <path class="padding-fill" d="m272,118l220,0l0,160l-220,0l0,-160z" id="svg_24"
+            stroke="#000000" stroke-dasharray="2" />
+        <path class="content-fill" d="m312,148l140,0l0,100l-140,0l0,-100z" id="svg_25"
+            stroke="#000000" />
+        <path class="arrow-stroke" d="m312.8,253.12l138.39,0" fill="none" id="svg_27"
+            marker-end="url(#mkr_end_svg_27)" marker-start="url(#mkr_start_svg_27)" />
+        <path class="arrow-stroke" d="m254.68,108l0,80" fill="none" id="svg_29"
+            marker-end="url(#mkr_end_svg_29)" marker-start="url(#mkr_start_svg_29)"
+            transform="matrix(-1 0 0 1.22929 711.432 16.0658)" />
+        <path d="m200,10l0,20" id="svg_32" transform="matrix(1 0 0 1 182 28)" />
+        <path d="m390,170l-20,0" id="svg_34" transform="matrix(1 0 0 1 182 28)" />
+        <path d="m200,330l0,-20" id="svg_36" transform="matrix(1 0 0 1 182 28)" />
+        <path d="m10,170l20,0" id="svg_38" transform="matrix(1 0 0 1 182 28)" />
+        <g id="svg_45" transform="matrix(1 0 0 1 0 0) matrix(1 0 0 1 0 0)">
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_26" text-anchor="middle" transform="matrix(1 0 0 1 182 28)" x="200" y="170">
+                content</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_28" text-anchor="middle" transform="matrix(1 0 0 1 183.913 36.6069)" x="200"
+                y="227.79">width</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_30" text-anchor="middle" transform="matrix(0 -1 1 0 299.751 476.507)"
+                x="275.93" y="170.93">height</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_33" stroke-width="0" transform="matrix(1 0 0 1 184.469 29.8148)" x="189.38"
+                y="18">top</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_35" stroke-width="0" transform="matrix(1 0 0 1 160.539 25.0617)" x="399"
+                y="172">right</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_37" stroke-width="0" transform="matrix(1 0 0 1 171.823 27.07)" x="192"
+                y="325">bottom</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_39" stroke-width="0" transform="matrix(1 0 0 1 186.638 36.5309)" x="-7.41"
+                y="162">left</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_42" text-anchor="middle" transform="matrix(1 0 0 1 166 -39)" x="217.85"
+                y="176.25">padding</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_43" text-anchor="middle" transform="matrix(1 0 0 1 150 -138)" x="234"
+                y="243.25">border</text>
+            <text class="text-black" font-family="Monospace" font-size="12" font-weight="bold"
+                id="svg_44" text-anchor="middle" transform="matrix(1 0 0 1 134 -266)" x="249.77"
+                y="342.25">margin</text>
+        </g>
+    </g>
+</svg>
