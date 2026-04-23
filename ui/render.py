@@ -12,16 +12,16 @@ from ui.types import Element, Rect
 logger = logging.getLogger(__name__)
 
 COLORS: dict[str, Color] = {
-    "background": Color(255, 255, 255),
-    "border": Color(0, 0, 0),
-    "text": Color(0, 0, 0),
+    "background": Color.from_hex("#FFFFFF"),
+    "border": Color.from_hex("#000000"),
+    "text": Color.from_hex("#000000"),
 }
 DEPTH_COLORS: list[Color] = [
-    Color(239, 68, 68),  # Red
-    Color(249, 155, 22),  # Orange
-    Color(234, 179, 8),  # Yellow
-    Color(34, 197, 94),  # Green
-    Color(59, 130, 246),  # Blue
+    Color.from_hex("#EF4444"),  # Red
+    Color.from_hex("#F99B16"),  # Orange
+    Color.from_hex("#EAAD08"),  # Yellow
+    Color.from_hex("#22C55E"),  # Green
+    Color.from_hex("#3B82F6"),  # Blue
 ]
 
 # Configuration
@@ -31,7 +31,7 @@ MIN_WINDOW_HEIGHT = 600
 
 FONT: pygame.font.Font
 FONT_SIZE = 12
-FONT_FAMILY = "jetbrainsmono"
+FONT_FAMILY = "monospace"
 
 
 def render(root: Element, title: str) -> None:
@@ -61,38 +61,24 @@ def render(root: Element, title: str) -> None:
                 screen = pygame.display.set_mode(
                     (window_width, window_height), RESIZABLE
                 )
+                logger.debug(f"Resized window to: {window_width}x{window_height}")
 
         # Draw background
         screen.fill(COLORS["background"])
 
         # Layout all elements
-        layout(
-            root,
-            Rect(
-                x=0,
-                y=0,
-                width=window_width,
-                height=window_height,
-            ),
-        )
+        available = Rect(x=0, y=0, width=window_width, height=window_height)
+        layout(root, available)
 
         # Draw all elements recursively
-        render_element(screen, root)
+        _render_element(screen, root)
 
         pygame.display.flip()
         clock.tick(60)
     logger.debug("Exiting...")
 
 
-def _get_border_color(color: Color, level: int) -> Color:
-    border_color = deepcopy(color)
-    border_color.r = max(0, border_color.r - 50)
-    border_color.g = max(0, border_color.g - 50)
-    border_color.b = max(0, border_color.b - 50)
-    return border_color
-
-
-def render_element(
+def _render_element(
     screen: pygame.Surface,
     element: Element,
     level: int = 0,
@@ -101,7 +87,10 @@ def render_element(
 
     # Get the base color for this depth level and calculate a border color
     base_color = DEPTH_COLORS[level % len(DEPTH_COLORS)]
-    border_color = _get_border_color(base_color, level)
+    border_color = deepcopy(base_color)
+    border_color.r = max(0, border_color.r - 50)
+    border_color.g = max(0, border_color.g - 50)
+    border_color.b = max(0, border_color.b - 50)
 
     # Draw filled rectangle with main color
     pygame.draw.rect(
@@ -120,14 +109,18 @@ def render_element(
 
     # Draw element ID as text (if large enough to fit text)
     if rect.width > 50 and rect.height > 30:
-        text_surface = FONT.render(element.id, True, COLORS["text"])
+        text_surface = FONT.render(
+            f"{element.id} ({int(element.rect.width)}x{int(element.rect.height)})",
+            True,
+            COLORS["text"],
+        )
         text_rect = text_surface.get_rect()
         text_rect.topleft = (int(rect.x) + 5, int(rect.y) + 5)
         screen.blit(text_surface, text_rect)
 
     # Draw all children
     for child in element.children:
-        render_element(screen, child, level + 1)
+        _render_element(screen, child, level + 1)
 
 
 def _find_file(filename: str) -> Path:
@@ -140,9 +133,9 @@ def _find_file(filename: str) -> Path:
     pattern = f"**/{filename}"
     if not pattern.endswith(".html"):
         pattern += ".html"
-    xml_files = list(current_dir_path.glob(pattern))
-    if xml_files:
-        return xml_files[0]
+    html_files = list(current_dir_path.glob(pattern))
+    if html_files:
+        return html_files[0]
 
     raise FileNotFoundError(
         f"File '{filename}' not found in current directory or provided path."
@@ -150,14 +143,14 @@ def _find_file(filename: str) -> Path:
 
 
 def render_file(filename: str) -> None:
-    xml_path = _find_file(filename)
-    logger.debug(f"Loading {filename} from {xml_path}...")
+    html_path = _find_file(filename)
+    logger.debug(f"Loading {filename} from {html_path}...")
 
-    with open(xml_path, "r") as f:
+    with open(html_path, "r") as f:
         xml_string = f.read()
 
     logger.debug("Parsing file...")
     root_element = Element.parse(xml_string)
 
     logger.debug("Rendering file...")
-    render(root_element, xml_path.stem)
+    render(root_element, html_path.stem)

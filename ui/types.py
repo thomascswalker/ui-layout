@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup, Tag
 
 from pydantic import AliasChoices, BaseModel, Field
 
+from ui.css import parse_style
+
 SupportsArithmetic = float | int
 
 
@@ -124,70 +126,50 @@ class Element(BaseModel):
             self.children.remove(child)
             child.parent = None
 
-    @staticmethod
-    def _parse_style(style_str: str) -> dict[str, str]:
-        """Parse a CSS style string into a dictionary of property-value pairs."""
-        if not style_str:
-            return {}
-
-        styles = {}
-        # Split by semicolon and strip whitespace
-        for declaration in style_str.split(";"):
-            declaration = declaration.strip()
-            if ":" in declaration:
-                prop, value = declaration.split(":", 1)
-                styles[prop.strip()] = value.strip()
-        return styles
-
     @classmethod
-    def parse(cls, xml_string: str | Tag) -> Element:
+    def parse(cls, html_string: str | Tag) -> Element:
         """Parse an HTML string to create a tree of `Element`s."""
 
-        if isinstance(xml_string, str):
-            soup = BeautifulSoup(xml_string, "html.parser")
+        if isinstance(html_string, str):
+            soup = BeautifulSoup(html_string, "html.parser")
             html = soup.find()  # Get the first element
         else:
-            html = xml_string
+            html = html_string
 
         if html is None:
             raise ValueError("No valid HTML element found in the input string.")
+        if not isinstance(html, Tag):
+            raise ValueError("Parsed HTML is not a valid Tag element.")
 
         # Parse style attribute if present
-        style_dict = {}
-        style_attr = html.get("style")
-        if style_attr:
-            style_dict = cls._parse_style(str(style_attr))
+        style = {}
+        if style_attr := html.get("style"):
+            style = parse_style(str(style_attr))
 
-        element_id = str(html.get("id", f"element_{id(html)}"))  # type: ignore
+        element_id = str(html.get("id", f"element_{id(html)}"))
 
         # Get values from style or fall back to individual attributes
-        display: Display = style_dict.get(
-            "display", html.get("display", DEFAULT_DISPLAY)
-        )  # type: ignore
-        position: Position = style_dict.get(
-            "position", html.get("position", DEFAULT_POSITION)
-        )  # type: ignore
-        direction: Direction = style_dict.get(
-            "direction", html.get("direction", DEFAULT_DIRECTION)
-        )  # type: ignore
-        padding = float(style_dict.get("padding", html.get("padding", 0.0)))  # type: ignore
-        margin = float(style_dict.get("margin", html.get("margin", 0.0)))  # type: ignore
-        border = float(style_dict.get("border", html.get("border", 0.0)))  # type: ignore
-        gap = float(style_dict.get("gap", html.get("gap", 0.0)))  # type: ignore
+        display = style.get("display", DEFAULT_DISPLAY)
+        position = style.get("position", DEFAULT_POSITION)
+        direction = style.get("direction", DEFAULT_DIRECTION)
+        padding = float(style.get("padding", 0.0))
+        margin = float(style.get("margin", 0.0))
+        border = float(style.get("border", 0.0))
+        gap = float(style.get("gap", 0.0))
 
         element = cls(
             id=element_id,
-            display=display,
-            position=position,
-            direction=direction,
+            display=display,  # type: ignore
+            position=position,  # type: ignore
+            direction=direction,  # type: ignore
             padding=padding,
             margin=margin,
             border=border,
             gap=gap,
         )
 
-        for child_xml in html.find_all(recursive=False):
-            child_element = Element.parse(child_xml)
+        for child_html in html.find_all(recursive=False):
+            child_element = Element.parse(child_html)
             element.add_child(child_element)
 
         return element
