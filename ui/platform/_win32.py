@@ -1,5 +1,4 @@
 from enum import IntEnum
-import sys
 from ctypes import (
     POINTER,
     WINFUNCTYPE,
@@ -32,6 +31,7 @@ from ctypes.wintypes import (
     UINT,
     WPARAM,
 )
+from typing import Callable
 
 
 def errcheck(result, *_):
@@ -107,6 +107,11 @@ GetModuleHandle.argtypes = (LPCWSTR,)
 GetModuleHandle.restype = HMODULE
 GetModuleHandle.errcheck = errcheck
 
+
+def get_module_handle(name: str) -> int:
+    return GetModuleHandle(name)
+
+
 LoadIcon = USER32.LoadIconW
 LoadIcon.argtypes = HINSTANCE, LPCWSTR
 LoadIcon.restype = HICON
@@ -125,6 +130,11 @@ RegisterClass.errcheck = errcheck
 ShowWindow = USER32.ShowWindow
 ShowWindow.argtypes = HWND, c_int
 ShowWindow.restype = BOOL
+
+
+def show_window(hwnd: int, flags: int) -> bool:
+    return ShowWindow(hwnd, flags)
+
 
 UpdateWindow = USER32.UpdateWindow
 UpdateWindow.argtypes = (HWND,)
@@ -161,9 +171,15 @@ EndPaint = USER32.EndPaint
 EndPaint.argtypes = HWND, POINTER(PAINTSTRUCT)
 EndPaint.restype = BOOL
 
-PostQuitMessage = USER32.PostQuitMessage
+
+PostQuitMessage: Callable[[int], None] = USER32.PostQuitMessage
 PostQuitMessage.argtypes = (c_int,)
 PostQuitMessage.restype = None
+
+
+def post_quit_message(code: int) -> None:
+    return PostQuitMessage(code)
+
 
 DefWindowProcW = USER32.DefWindowProcW
 DefWindowProcW.argtypes = HWND, UINT, WPARAM, LPARAM
@@ -214,75 +230,40 @@ class WindowsMessage(IntEnum):
     PAINT = 15
 
 
-def wnd_proc(hwnd: int, msg: int, wparam: int, lparam: int):
-    ps = PAINTSTRUCT()
-    rect = RECT()
+class Window:
+    def __init__(self, name: str, wnd_proc):
+        # Define Window Class
+        self.cls = WNDCLASSEX()
+        self.cls.style = CS_HREDRAW | CS_VREDRAW
+        self.cls.lpfnWndProc = WNDPROC(wnd_proc)
+        self.cls.cbClsExtra = 0
+        self.cls.cbWndExtra = 0
+        self.cls.hInstance = GetModuleHandle(None)
+        self.cls.hIcon = LoadIcon(None, IDI_APPLICATION)
+        self.cls.hCursor = LoadCursor(None, IDC_ARROW)
+        self.cls.hbrBackground = GetStockObject(WHITE_BRUSH)
+        self.cls.lpszMenuName = None
+        self.cls.lpszClassName = "WindowClassName"
 
-    match msg:
-        case WindowsMessage.DESTROY:
-            PostQuitMessage(0)
-            return 0
-        case WindowsMessage.PAINT:
-            hdc = BeginPaint(hwnd, byref(ps))
-            GetClientRect(hwnd, byref(rect))
-            DrawText(
-                hdc,
-                "A window",
-                -1,
-                byref(rect),
-                DT_SINGLELINE | DT_CENTER | DT_VCENTER,
-            )
-            EndPaint(hwnd, byref(ps))
-            return 0
+        # Register Window Class
+        RegisterClass(byref(self.cls))
 
-    return DefWindowProcW(hwnd, msg, wparam, lparam)
+        # Create Window
+        self.hwnd = CreateWindow(
+            0,
+            self.cls.lpszClassName,
+            name,
+            WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+            CW_USEDEFAULT,
+            None,
+            None,
+            self.cls.hInstance,
+            None,
+        )
 
-
-def main():
-    # Define Window Class
-    cls = WNDCLASSEX()
-    cls.style = CS_HREDRAW | CS_VREDRAW
-    cls.lpfnWndProc = WNDPROC(wnd_proc)
-    cls.cbClsExtra = 0
-    cls.cbWndExtra = 0
-    cls.hInstance = GetModuleHandle(None)
-    cls.hIcon = LoadIcon(None, IDI_APPLICATION)
-    cls.hCursor = LoadCursor(None, IDC_ARROW)
-    cls.hbrBackground = GetStockObject(WHITE_BRUSH)
-    cls.lpszMenuName = None
-    cls.lpszClassName = "MainWin"
-
-    # Register Window Class
-    RegisterClass(byref(cls))
-
-    # Create Window
-    hwnd = CreateWindow(
-        0,
-        cls.lpszClassName,
-        "Python Window",
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        None,
-        None,
-        cls.hInstance,
-        None,
-    )
-
-    # Show Window
-    USER32.ShowWindow(hwnd, SW_SHOWNORMAL)
-    USER32.UpdateWindow(hwnd)
-
-    # Pump Messages
-    msg = MSG()
-    while GetMessage(byref(msg), None, 0, 0) != 0:
-        TranslateMessage(byref(msg))
-        DispatchMessageW(byref(msg))
-
-    return msg.wParam
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    def show(self):
+        ShowWindow(self.hwnd, SW_SHOWNORMAL)
+        UpdateWindow(self.hwnd)

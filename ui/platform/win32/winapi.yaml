@@ -1,0 +1,254 @@
+header: winuser.h
+
+types:
+  BOOL: wintypes.BOOL
+  BYTE: wintypes.BYTE
+  WORD: wintypes.WORD
+  DWORD: wintypes.DWORD
+  UINT: wintypes.UINT
+  INT: wintypes.INT
+  LONG: wintypes.LONG
+  ULONG: wintypes.ULONG
+  ATOM: wintypes.ATOM
+  HWND: wintypes.HWND
+  HANDLE: wintypes.HANDLE
+  HMODULE: wintypes.HMODULE
+  HINSTANCE: wintypes.HINSTANCE
+  HMENU: wintypes.HMENU
+  HICON: wintypes.HICON
+  HCURSOR: wintypes.HCURSOR
+  HBRUSH: wintypes.HBRUSH
+  HDC: wintypes.HDC
+  RECT: wintypes.RECT
+  POINT: wintypes.POINT
+  LPCWSTR: wintypes.LPCWSTR
+  LPWSTR: wintypes.LPWSTR
+  LPCSTR: ctypes.c_char_p
+  LPSTR: ctypes.c_char_p
+  LPVOID: wintypes.LPVOID
+  WPARAM: wintypes.WPARAM
+  LPARAM: wintypes.LPARAM
+  LRESULT: wintypes.LRESULT
+  WNDPROC: ctypes.c_void_p
+  c_int: ctypes.c_int
+  BYTE_ARRAY_32: ctypes.c_byte * 32
+  MSG: Msg
+  PaintStruct: PaintStruct
+  PAINTSTRUCT: PaintStruct
+  WNDCLASSEXW: WndClassExW
+
+structs:
+  - c_name: POINT
+    py_name: Point
+    fields:
+      x: LONG
+      y: LONG
+
+  - c_name: MSG
+    py_name: Msg
+    fields:
+      hwnd: HWND
+      message: UINT
+      w_param: WPARAM
+      l_param: LPARAM
+      time: DWORD
+      pt: POINT
+
+  - c_name: PAINTSTRUCT
+    py_name: PaintStruct
+    fields:
+      hdc: HDC
+      f_erase: BOOL
+      rc_paint: RECT
+      f_restore: BOOL
+      f_inc_update: BOOL
+      rgb_reserved: BYTE_ARRAY_32
+
+  - c_name: WNDCLASSEXW
+    py_name: WndClassExW
+    fields:
+      cb_size: UINT
+      style: UINT
+      lpfn_wnd_proc: WNDPROC
+      cb_cls_extra: c_int
+      cb_wnd_extra: c_int
+      h_instance: HINSTANCE
+      h_icon: HICON
+      h_cursor: HCURSOR
+      hbr_background: HBRUSH
+      lpsz_menu_name: LPCWSTR
+      lpsz_class_name: LPCWSTR
+      h_icon_sm: HICON
+
+functions:
+  - dll: user32
+    c_name: ShowWindow
+    py_name: show_window
+    params:
+      hwnd: HWND
+      flags: c_int
+    return_type: BOOL
+
+  - dll: kernel32
+    c_name: GetModuleHandleW
+    py_name: get_module_handle
+    params:
+      module_name: LPCWSTR
+    return_type: HMODULE
+
+  - dll: user32
+    c_name: MessageBoxW
+    py_name: message_box
+    params:
+      hwnd: HWND
+      text: LPCWSTR
+      caption: LPCWSTR
+      type: UINT
+    return_type: c_int
+
+  - dll: kernel32
+    c_name: Beep
+    py_name: beep
+    params:
+      frequency: DWORD
+      duration: DWORD
+    return_type: BOOL
+
+  - dll: user32
+    c_name: SetWindowTextW
+    py_name: set_window_text
+    params:
+      hwnd: HWND
+      text: LPCWSTR
+    return_type: BOOL
+
+  - dll: user32
+    c_name: BeginPaint
+    py_name: begin_paint
+    params:
+      hwnd: HWND
+      paint_struct: ctypes.POINTER(PaintStruct)
+    return_type: HDC
+
+  - dll: user32
+    c_name: EndPaint
+    py_name: end_paint
+    params:
+      hwnd: HWND
+      paint_struct: ctypes.POINTER(PaintStruct)
+    return_type: BOOL
+
+  - dll: user32
+    c_name: PostQuitMessage
+    py_name: post_quit_message
+    params:
+      exit_code: c_int
+    return_type: None
+
+  - dll: user32
+    c_name: GetClientRect
+    py_name: get_client_rect
+    params:
+      hwnd: HWND
+      rect: ctypes.POINTER(RECT)
+    return_type: BOOL
+
+  - dll: user32
+    c_name: DrawTextW
+    py_name: draw_text
+    params:
+      hdc: HDC
+      text: LPCWSTR
+      count: c_int
+      rect: ctypes.POINTER(RECT)
+      format: UINT
+    return_type: c_int
+
+  - dll: user32
+    c_name: DefWindowProcW
+    py_name: def_window_proc
+    params:
+      hwnd: HWND
+      msg: UINT
+      w_param: WPARAM
+      l_param: LPARAM
+    return_type: LRESULT
+
+  - dll: user32
+    c_name: GetMessageW
+    py_name: get_message
+    params:
+      msg: ctypes.POINTER(MSG)
+      hwnd: HWND
+      msg_filter_min: UINT
+      msg_filter_max: UINT
+    return_type: BOOL
+
+  - dll: user32
+    c_name: TranslateMessage
+    py_name: translate_message
+    params:
+      msg: ctypes.POINTER(MSG)
+    return_type: BOOL
+
+  - dll: user32
+    c_name: DispatchMessageW
+    py_name: dispatch_message
+    params:
+      msg: ctypes.POINTER(MSG)
+    return_type: LRESULT
+
+  - dll: user32
+    c_name: LoadIconW
+    py_name: load_icon
+    params:
+      instance: HINSTANCE
+      icon_name: LPCWSTR
+    return_type: HICON
+
+  - dll: user32
+    c_name: LoadCursorW
+    py_name: load_cursor
+    params:
+      instance: HINSTANCE
+      cursor_name: LPCWSTR
+    return_type: HCURSOR
+
+  - dll: gdi32
+    c_name: GetStockObject
+    py_name: get_stock_object
+    params:
+      object: c_int
+    return_type: HBRUSH
+
+  - dll: user32
+    c_name: RegisterClassExW
+    py_name: register_class_ex
+    params:
+      wnd_class: ctypes.POINTER(WndClassExW)
+    return_type: ATOM
+
+  - dll: user32
+    c_name: CreateWindowExW
+    py_name: create_window_ex
+    params:
+      ex_style: DWORD
+      class_name: LPCWSTR
+      window_name: LPCWSTR
+      style: DWORD
+      x: c_int
+      y: c_int
+      width: c_int
+      height: c_int
+      parent: HWND
+      menu: HMENU
+      instance: HINSTANCE
+      param: LPVOID
+    return_type: HWND
+
+  - dll: user32
+    c_name: UpdateWindow
+    py_name: update_window
+    params:
+      hwnd: HWND
+    return_type: BOOL

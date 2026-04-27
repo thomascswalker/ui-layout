@@ -1,8 +1,8 @@
 import argparse
-from ctypes import byref, windll
+from ctypes import byref
 from ctypes.wintypes import MSG, RECT
 
-from ui.platform.win32 import PAINTSTRUCT
+from ui.platform import win32
 from ui.render import render_file
 from ui.logger import init_logging
 
@@ -30,42 +30,36 @@ def main() -> int:
         render_file(args.file)
         return 0
     else:
-        from ui.platform.win32 import create_window
 
-        def callback(hwnd: int, msg: int, wparam: int, lparam: int) -> int:
-            print(f"Message: {msg}")
-
-            ps = PAINTSTRUCT()
+        def wnd_proc(hwnd: int, msg: int, wparam: int, lparam: int):
+            ps = win32.PaintStruct()
             rect = RECT()
 
-            if msg == WM_DESTROY:  # WM_DESTROY
-                print("Destroying window...")
-                windll.user32.PostQuitMessage(0)
-                return 0
-            if msg == WM_PAINT:  # WM_PAINT
-                print("Painting...")
-                hdc = windll.user32.BeginPaint(hwnd, byref(ps))
-                windll.user32.GetClientRect(hwnd, byref(rect))
-                windll.user32.DrawTextW(
-                    hdc,
-                    "Python Powered Windows 你好吗？",
-                    -1,
-                    byref(rect),
-                    DT_SINGLELINE | DT_CENTER | DT_VCENTER,
-                )
-                windll.user32.EndPaint(hwnd, byref(ps))
-                return 0
+            match msg:
+                case win32.WindowsMessage.DESTROY:
+                    win32.post_quit_message(0)
+                    return 0
+                case win32.WindowsMessage.PAINT:
+                    hdc = win32.begin_paint(hwnd, ps)
+                    win32.get_client_rect(hwnd, rect)
+                    win32.draw_text(
+                        hdc,
+                        "A window",
+                        -1,
+                        rect,
+                        DT_SINGLELINE | DT_CENTER | DT_VCENTER,
+                    )
+                    win32.end_paint(hwnd, ps)
+                    return 0
 
-            return windll.user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+            return win32.def_window_proc(hwnd, msg, wparam, lparam)
 
-        create_window("My Window", callback)
+        window = win32.Window("Python win32", wnd_proc)
+        window.show()
+
         msg = MSG()
-        pmsg = byref(msg)
+        while win32.get_message(msg, 0, 0, 0) != 0:
+            win32.translate_message(msg)
+            win32.dispatch_message(msg)
 
-        while windll.user32.GetMessageW(pmsg, None, 0, 0):
-            windll.user32.TranslateMessage(pmsg)
-            windll.user32.DispatchMessageW(pmsg)
-
-        ret_code = msg.wParam
-        print(f"Return code: {ret_code}")
-        return ret_code
+        return msg.wParam

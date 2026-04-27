@@ -10,11 +10,7 @@ class Renderer:
                 raise OSError(f"Unsupported OS: {sys.platform}")
 
     def _init_win(self) -> None:
-        from ctypes import windll
-
-        kernel32 = windll.kernel32
-        user32 = windll.user32
-        gdi32 = windll.gdi32
+        return
 
 
 if __name__ == "__main__":
