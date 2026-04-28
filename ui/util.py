@@ -1,4 +1,23 @@
 import re
+from pathlib import Path
+
+
+def find_file(filename: str) -> Path:
+    path = Path(filename)
+    if path.exists() and path.is_file():
+        return path
+
+    current_dir_path = Path.cwd()
+    pattern = f"**/{filename}"
+    if not pattern.endswith(".html"):
+        pattern += ".html"
+    html_files = list(current_dir_path.glob(pattern))
+    if html_files:
+        return html_files[0]
+
+    raise FileNotFoundError(
+        f"File '{filename}' not found in current directory or provided path."
+    )
 
 
 # https://gist.github.com/dubpirate/fdea9a67500a46613ad637269320d272?permalink_comment_id=5118226#gistcomment-5118226

@@ -19,6 +19,30 @@ INHERITED_PROPS = ("padding", "margin", "gap")
 
 
 @dataclass
+class RGB:
+    r: int
+    g: int
+    b: int
+
+    def __int__(self) -> int:
+        return self.r | (self.g << 8) | (self.b << 16)
+
+    def __sub__(self, other: RGB) -> RGB:
+        return RGB(self.r - other.r, self.g - other.g, self.b - other.b)
+
+    def __add__(self, other: RGB) -> RGB:
+        return RGB(self.r + other.r, self.g + other.g, self.b + other.b)
+
+    @classmethod
+    def black(cls) -> RGB:
+        return cls(0, 0, 0)
+
+    @classmethod
+    def white(cls) -> RGB:
+        return cls(255, 255, 255)
+
+
+@dataclass
 class Point:
     x: float = 0.0
     y: float = 0.0

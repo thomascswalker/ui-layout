@@ -3,9 +3,8 @@ import sys
 from typing import override
 
 from ui.platform.generic.window import GenericWindow
-from ui.platform.linux import constants, types, x11
+from ui.platform.linux import types, x11
 from ui.platform.linux.renderer import LinuxRenderer
-from ui.renderer import MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH
 
 
 class LinuxWindow(GenericWindow):
@@ -16,14 +15,13 @@ class LinuxWindow(GenericWindow):
         *,
         width: int | None = None,
         height: int | None = None,
+        x: int | None = None,
+        y: int | None = None,
     ) -> None:
-        super().__init__(filename)
+        super().__init__(filename, width=width, height=height, x=x, y=y)
 
         self.renderer = LinuxRenderer()
         self.renderer.load_file(filename)
-
-        win_w = width if width is not None else MIN_WINDOW_WIDTH
-        win_h = height if height is not None else MIN_WINDOW_HEIGHT
 
         self._display = x11.open_display()
         self._screen = x11.default_screen(self._display)
@@ -34,10 +32,10 @@ class LinuxWindow(GenericWindow):
         self._window = x11.create_simple_window(
             self._display,
             root,
-            constants.DEFAULT_X,
-            constants.DEFAULT_Y,
-            win_w,
-            win_h,
+            self.x,
+            self.y,
+            self.width,
+            self.height,
             0,
             black,
             white,
@@ -67,9 +65,12 @@ class LinuxWindow(GenericWindow):
                 x11.set_font(self._display, self._gc, self._font.contents.fid)
                 break
 
-        self.renderer.bind(
-            self._display, self._screen, self._window, self._gc, self._font
-        )
+        self.renderer._display = self._display
+        self.renderer._screen = self._screen
+        self.renderer._window = self._window
+        self.renderer._gc = self._gc
+        self.renderer._font = self._font
+        self.renderer._colormap = x11.default_colormap(self._display, self._screen)
 
     @override
     def show(self) -> None:

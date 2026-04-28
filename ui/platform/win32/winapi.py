@@ -1,9 +1,21 @@
+"""
+Wrapper around the Windows API. Provides human-readable names for functions,
+parameters, attributes, enums, and constants.
+
+Some functions require pointers to structures, so these are wrapped in
+`ctypes.byref()` to simplify the Python API.
+"""
+
 from __future__ import annotations
 
 import ctypes
+from contextlib import contextmanager
 from ctypes import wintypes
 from functools import lru_cache
-from typing import Any
+from typing import Any, Generator
+
+from ui.platform.win32 import types
+from ui.types import RGB
 
 _DLL_CACHE: dict[str, ctypes.WinDLL] = {}
 
@@ -14,7 +26,12 @@ def _dll(name: str) -> ctypes.WinDLL:
 
 
 class PaintStruct(ctypes.Structure):
-    """ctypes.Structure for PAINTSTRUCT."""
+    """
+    Contains information for an application. This information can be used to
+    paint the client area of a window owned by that application.
+
+    https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-paintstruct
+    """
 
     _fields_ = [
         ("hdc", wintypes.HDC),
@@ -25,10 +42,52 @@ class PaintStruct(ctypes.Structure):
         ("rgb_reserved", ctypes.c_byte * 32),
     ]
 
+    @property
+    def device_context(self) -> int:
+        """
+        A handle to the display device context (DC) to be used for painting.
+        Alias of `hdc`.
+        """
+        return self.hdc  # type: ignore
+
+    @device_context.setter
+    def device_context(self, value: int) -> None:
+        self.hdc = ctypes.cast(value, ctypes.c_void_p)  # type: ignore
+
+    @property
+    def erase_background(self) -> bool:
+        """
+        Indicates whether the background must be erased. This value is
+        nonzero if the application should erase the background. The application
+        is responsible for erasing the background if a window class is created
+        without a background brush. For more information, see the description
+        of the hbrBackground member of the WNDCLASS structure.
+
+        Alias of `fErase`.
+        """
+        return self.f_erase
+
+    @erase_background.setter
+    def erase_background(self, value: bool) -> None:
+        self.f_erase = ctypes.cast(value, ctypes.c_bool)  # type: ignore
+
+    @property
+    def rect(self) -> wintypes.RECT:
+        """
+        A RECT structure that specifies the upper left and lower right
+        corners of the rectangle in which the painting is requested, in device
+        units relative to the upper-left corner of the client area.
+
+        Alias of `rcPaint`.
+        """
+        return self.rc_paint
+
+    @rect.setter
+    def rect(self, value: wintypes.RECT) -> None:
+        self.rc_paint = value
+
 
 class WndClassExW(ctypes.Structure):
-    """ctypes.Structure for WNDCLASSEXW."""
-
     _fields_ = [
         ("cb_size", wintypes.UINT),
         ("style", wintypes.UINT),
@@ -100,8 +159,8 @@ BeginPaint.argtypes = (wintypes.HWND, ctypes.POINTER(PaintStruct))
 BeginPaint.restype = wintypes.HDC
 
 
-def begin_paint(hwnd: int, paint_struct: Any) -> int:
-    return BeginPaint(hwnd, paint_struct)
+def begin_paint(hwnd: int, paint_struct: PaintStruct) -> int:
+    return BeginPaint(hwnd, ctypes.byref(paint_struct))
 
 
 EndPaint = _dll("user32").EndPaint
@@ -109,8 +168,8 @@ EndPaint.argtypes = (wintypes.HWND, ctypes.POINTER(PaintStruct))
 EndPaint.restype = wintypes.BOOL
 
 
-def end_paint(hwnd: int, paint_struct: Any) -> bool:
-    return EndPaint(hwnd, paint_struct)
+def end_paint(hwnd: int, paint_struct: PaintStruct) -> bool:
+    return EndPaint(hwnd, ctypes.byref(paint_struct))
 
 
 PostQuitMessage = _dll("user32").PostQuitMessage
@@ -142,8 +201,10 @@ DrawTextW.argtypes = (
 DrawTextW.restype = wintypes.INT
 
 
-def draw_text(hdc: int, text: str | None, count: int, rect: Any, format: int) -> int:
-    return DrawTextW(hdc, text, count, rect, format)
+def draw_text(
+    hdc: int, text: str | None, count: int, rect: wintypes.RECT, format: int
+) -> int:
+    return DrawTextW(hdc, text, count, ctypes.byref(rect), format)
 
 
 DefWindowProcW = _dll("user32").DefWindowProcW
@@ -369,8 +430,8 @@ InvalidateRect.argtypes = (
 InvalidateRect.restype = wintypes.BOOL
 
 
-def invalidate_rect(hwnd: int, rect: Any | None, erase: bool) -> bool:
-    return InvalidateRect(hwnd, rect, erase)
+def invalidate_rect(hwnd: int, rect: wintypes.RECT | None, erase: bool) -> bool:
+    return InvalidateRect(hwnd, ctypes.byref(rect) if rect else None, erase)
 
 
 FillRect = _dll("user32").FillRect
@@ -378,40 +439,89 @@ FillRect.argtypes = (wintypes.HDC, ctypes.POINTER(wintypes.RECT), wintypes.HBRUS
 FillRect.restype = wintypes.INT
 
 
-def fill_rect(hdc: int, rect: Any, brush: int) -> int:
-    return FillRect(hdc, rect, brush)
+def fill_rect(hdc: int, rect: wintypes.RECT, brush: int) -> int:
+    return FillRect(hdc, ctypes.byref(rect), brush)
+
+
+@contextmanager
+def paint(hdc: int) -> Generator[PaintStruct, None, None]:
+    """
+    Context manager for painting a window.
+
+    Args:
+        hdc: The device context to paint on.
+    """
+    ps = PaintStruct()
+    hdc = begin_paint(hdc, ps)
+    yield ps
+    end_paint(hdc, ps)
+
+
+@contextmanager
+def draw(
+    hdc: int,
+    fill: RGB,
+    stroke: RGB,
+    width: int = 1,
+) -> Generator[None, None, None]:
+    """
+    Context manager for drawing with GDI objects.
+
+    Args:
+        hdc: The device context to draw on.
+        fill: The fill color.
+        stroke: The stroke color.
+        width: The width of the stroke.
+    """
+    brush_obj = create_solid_brush(fill.r | (fill.g << 8) | (fill.b << 16))
+    pen_obj = create_pen(
+        types.PenStyle.SOLID,
+        width,
+        stroke.r | (stroke.g << 8) | (stroke.b << 16),
+    )
+    old_br = select_object(hdc, brush_obj)
+    old_pen = select_object(hdc, pen_obj)
+    try:
+        yield
+    finally:
+        select_object(hdc, old_br)
+        select_object(hdc, old_pen)
+        delete_object(brush_obj)
+        delete_object(pen_obj)
 
 
 __all__ = [
-    "show_window",
-    "get_module_handle",
-    "message_box",
     "beep",
-    "set_window_text",
     "begin_paint",
-    "end_paint",
-    "post_quit_message",
-    "get_client_rect",
-    "draw_text",
-    "def_window_proc",
-    "get_message",
-    "translate_message",
-    "dispatch_message",
-    "load_icon",
-    "load_cursor",
-    "get_stock_object",
-    "register_class_ex",
-    "create_window_ex",
-    "update_window",
-    "create_solid_brush",
     "create_pen",
-    "select_object",
+    "create_solid_brush",
+    "create_window_ex",
+    "def_window_proc",
     "delete_object",
-    "rectangle",
-    "set_text_color",
-    "set_bk_mode",
-    "invalidate_rect",
+    "dispatch_message",
+    "draw_text",
+    "draw",
+    "end_paint",
     "fill_rect",
+    "get_client_rect",
+    "get_message",
+    "get_module_handle",
+    "get_stock_object",
+    "invalidate_rect",
+    "load_cursor",
+    "load_icon",
+    "message_box",
+    "paint",
     "PaintStruct",
+    "post_quit_message",
+    "rectangle",
+    "register_class_ex",
+    "select_object",
+    "set_bk_mode",
+    "set_text_color",
+    "set_window_text",
+    "show_window",
+    "translate_message",
+    "update_window",
     "WndClassExW",
 ]
