@@ -28,10 +28,18 @@ class RGB:
         return self.r | (self.g << 8) | (self.b << 16)
 
     def __sub__(self, other: RGB) -> RGB:
-        return RGB(self.r - other.r, self.g - other.g, self.b - other.b)
+        return RGB(
+            max(0, min(255, self.r - other.r)),
+            max(0, min(255, self.g - other.g)),
+            max(0, min(255, self.b - other.b)),
+        )
 
     def __add__(self, other: RGB) -> RGB:
-        return RGB(self.r + other.r, self.g + other.g, self.b + other.b)
+        return RGB(
+            max(0, min(255, self.r + other.r)),
+            max(0, min(255, self.g + other.g)),
+            max(0, min(255, self.b + other.b)),
+        )
 
     @classmethod
     def black(cls) -> RGB:

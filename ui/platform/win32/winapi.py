@@ -444,17 +444,22 @@ def fill_rect(hdc: int, rect: wintypes.RECT, brush: int) -> int:
 
 
 @contextmanager
-def paint(hdc: int) -> Generator[PaintStruct, None, None]:
+def paint(hwnd: int) -> Generator[PaintStruct, None, None]:
     """
-    Context manager for painting a window.
+    Context manager for painting a window's client area.
+
+    BeginPaint returns an HDC and fills ``ps``; EndPaint must receive the same
+    window handle as BeginPaint, not the device context.
 
     Args:
-        hdc: The device context to paint on.
+        hwnd: Window handle passed to BeginPaint / EndPaint.
     """
     ps = PaintStruct()
-    hdc = begin_paint(hdc, ps)
-    yield ps
-    end_paint(hdc, ps)
+    begin_paint(hwnd, ps)
+    try:
+        yield ps
+    finally:
+        end_paint(hwnd, ps)
 
 
 @contextmanager
