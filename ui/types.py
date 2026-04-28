@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Literal
-from bs4 import BeautifulSoup, Tag
 
+from bs4 import BeautifulSoup, Tag
 from pydantic import AliasChoices, BaseModel, Field
 
 from ui.css import parse_style

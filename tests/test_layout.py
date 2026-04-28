@@ -1,7 +1,7 @@
 import pytest
 
-from ui.types import Direction, Element, Rect
 from ui.layout import layout
+from ui.types import Direction, Element, Rect
 
 ROOT_WIDTH = 640
 ROOT_HEIGHT = 480

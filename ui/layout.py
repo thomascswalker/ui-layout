@@ -1,5 +1,6 @@
-from ui.types import Element, Point, Rect, Size
 import logging
+
+from ui.types import Element, Point, Rect, Size
 
 logger = logging.getLogger(__name__)
 

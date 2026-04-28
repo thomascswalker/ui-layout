@@ -1,7 +1,7 @@
 import pytest
 
 from tests.conftest import Operator
-from ui.types import Rect, Point
+from ui.types import Point, Rect
 
 
 def test_rect_create():

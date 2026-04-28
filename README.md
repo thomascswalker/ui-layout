@@ -2,14 +2,16 @@
 
 ## Overview
 
-Algorithms for laying out GUI elements, written in Python for simplicity. Uses `pygame` to render GUIs.
+Algorithms for laying out GUI elements, written in Python for simplicity. 
 
 ![Example Image](images/example.png)
 
 ## Usage
 
 1. `uv venv`
-2. `.venv\scripts\activate`
+2. Activate the virtual environment:
+    - Windows: `.venv\scripts\activate`
+    - Linux: `source .venv/bin/activate`
 3. `uv sync`
 
 > [!TIP]
@@ -27,4 +29,5 @@ At this point you can run the simple CLI renderer.
 
 ## AI Usage
 
-Used Copilot to generate/maintain tests.
+Used Copilot to generate/maintain tests as well as the win32/x11 abstractions (as these were 
+not the focus of the project).
