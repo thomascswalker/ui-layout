@@ -140,7 +140,10 @@ class Rect:
     def __add__(self, other: Rect | SupportsArithmetic) -> Rect:
         if isinstance(other, SupportsArithmetic):
             return Rect(
-                self.x + other, self.y + other, self.width + other, self.height + other
+                self.x + other,
+                self.y + other,
+                self.width + other,
+                self.height + other,
             )
         if isinstance(other, Rect):
             return Rect(
