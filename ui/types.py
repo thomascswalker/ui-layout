@@ -19,6 +19,38 @@ INHERITED_PROPS = ("padding", "margin", "gap")
 
 
 @dataclass
+class RGB:
+    r: int
+    g: int
+    b: int
+
+    def __int__(self) -> int:
+        return self.r | (self.g << 8) | (self.b << 16)
+
+    def __sub__(self, other: RGB) -> RGB:
+        return RGB(
+            max(0, min(255, self.r - other.r)),
+            max(0, min(255, self.g - other.g)),
+            max(0, min(255, self.b - other.b)),
+        )
+
+    def __add__(self, other: RGB) -> RGB:
+        return RGB(
+            max(0, min(255, self.r + other.r)),
+            max(0, min(255, self.g + other.g)),
+            max(0, min(255, self.b + other.b)),
+        )
+
+    @classmethod
+    def black(cls) -> RGB:
+        return cls(0, 0, 0)
+
+    @classmethod
+    def white(cls) -> RGB:
+        return cls(255, 255, 255)
+
+
+@dataclass
 class Point:
     x: float = 0.0
     y: float = 0.0
@@ -108,7 +140,10 @@ class Rect:
     def __add__(self, other: Rect | SupportsArithmetic) -> Rect:
         if isinstance(other, SupportsArithmetic):
             return Rect(
-                self.x + other, self.y + other, self.width + other, self.height + other
+                self.x + other,
+                self.y + other,
+                self.width + other,
+                self.height + other,
             )
         if isinstance(other, Rect):
             return Rect(

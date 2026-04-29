@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 import ctypes
-from typing import Any
+from typing import Any, override
 
 from ui.layout import layout
+from ui.platform.generic.renderer import DEPTH_COLORS_RGB, GenericRenderer
 from ui.platform.linux import types as xtypes
 from ui.platform.linux import x11
-from ui.renderer import BORDER_WIDTH, DEPTH_COLORS_RGB, GenericRenderer
-from ui.types import Element, Rect
-
-
-def _border_rgb(rgb: tuple[int, int, int]) -> tuple[int, int, int]:
-    r, g, b = rgb
-    return (max(0, r - 50), max(0, g - 50), max(0, b - 50))
+from ui.types import RGB, Element, Rect
 
 
 class LinuxRenderer(GenericRenderer):
@@ -27,21 +22,6 @@ class LinuxRenderer(GenericRenderer):
         self._colormap: int = 0
         self._font: Any = None
 
-    def bind(
-        self,
-        display: ctypes.c_void_p,
-        screen: int,
-        window: int,
-        gc: int,
-        font: Any,
-    ) -> None:
-        self._display = display
-        self._screen = screen
-        self._window = window
-        self._gc = gc
-        self._font = font
-        self._colormap = x11.default_colormap(display, screen)
-
     def _pixel(self, r: int, g: int, b: int) -> int:
         key = (r, g, b)
         if key not in self._color_cache:
@@ -54,34 +34,32 @@ class LinuxRenderer(GenericRenderer):
             )
         return self._color_cache[key]
 
-    def paint(self, hwnd: int, hdc: int) -> None:
+    @override
+    def paint(self, window: int, context: int) -> None:
         display = self._display
-        window = hwnd
-        gc = hdc
 
         w, h = x11.get_window_geometry(display, window)
         if w <= 0 or h <= 0:
             return
 
         white = x11.white_pixel(display, self._screen)
-        x11.set_foreground(display, gc, white)
-        x11.fill_rectangle(display, window, gc, 0, 0, w, h)
+        x11.set_foreground(display, context, white)
+        x11.fill_rectangle(display, window, context, 0, 0, w, h)
 
         available = Rect(x=0.0, y=0.0, width=float(w), height=float(h))
         layout(self._root, available)
 
         black = self._pixel(0, 0, 0)
-        x11.set_foreground(display, gc, black)
-        self._draw_element(display, window, gc, self._root, 0)
+        x11.set_foreground(display, context, black)
+        self.draw_element(context, self.root)
         x11.flush(display)
 
-    def _draw_element(
+    @override
+    def draw_element(
         self,
-        display: ctypes.c_void_p,
-        window: int,
-        gc: int,
+        context: int,
         element: Element,
-        level: int,
+        level: int = 0,
     ) -> None:
         rect = element.rect
         left = int(rect.x)
@@ -90,43 +68,48 @@ class LinuxRenderer(GenericRenderer):
         rh = max(0, int(rect.height))
 
         base = DEPTH_COLORS_RGB[level % len(DEPTH_COLORS_RGB)]
-        border = _border_rgb(base)
+        border = base - RGB(50, 50, 50)
 
-        fill_px = self._pixel(*base)
-        border_px = self._pixel(*border)
+        fill_px = self._pixel(base.r, base.g, base.b)
+        border_px = self._pixel(border.r, border.g, border.b)
 
-        x11.set_foreground(display, gc, fill_px)
-        x11.fill_rectangle(display, window, gc, left, top, rw, rh)
+        x11.set_foreground(self._display, context, fill_px)
+        x11.fill_rectangle(self._display, self._window, context, left, top, rw, rh)
 
-        x11.set_foreground(display, gc, border_px)
+        x11.set_foreground(self._display, context, border_px)
         x11.set_line_attributes(
-            display,
-            gc,
-            BORDER_WIDTH,
+            self._display,
+            context,
+            1,
             int(xtypes.LineStyle.SOLID),
             int(xtypes.CapStyle.BUTT),
             int(xtypes.JoinStyle.MITER),
         )
-        x11.draw_rectangle(display, window, gc, left, top, rw, rh)
+        x11.draw_rectangle(self._display, self._window, context, left, top, rw, rh)
 
         if self._font is not None and rect.width > 50 and rect.height > 30:
-            pos_text = f"{int(element.rect.x)}x, {int(element.rect.y)}y"
-            size_text = f"{int(element.rect.width)}w, {int(element.rect.height)}h"
-            label_text = f"{element.id} [{pos_text}], [{size_text}]"
-            label_padding = 5
-
-            baseline_y = int(rect.y) + label_padding + int(self._font.contents.ascent)
-
-            label_bytes = label_text.encode("latin-1", errors="replace")
-            x11.set_foreground(display, gc, self._pixel(0, 0, 0))
-            x11.draw_string(
-                display,
-                window,
-                gc,
-                int(rect.x) + label_padding,
-                baseline_y,
-                label_bytes,
-            )
+            self.draw_element_label(context, element)
 
         for child in element.children:
-            self._draw_element(display, window, gc, child, level + 1)
+            self.draw_element(context, child, level + 1)
+
+    def draw_element_label(self, context: int, element: Element) -> None:
+        pos_text = f"{int(element.rect.x)}x, {int(element.rect.y)}y"
+        size_text = f"{int(element.rect.width)}w, {int(element.rect.height)}h"
+        label_text = f"{element.id} [{pos_text}], [{size_text}]"
+        label_padding = 5
+
+        baseline_y = (
+            int(element.rect.y) + label_padding + int(self._font.contents.ascent)
+        )
+
+        label_bytes = label_text.encode("latin-1", errors="replace")
+        x11.set_foreground(self._display, context, self._pixel(0, 0, 0))
+        x11.draw_string(
+            self._display,
+            self._window,
+            context,
+            int(element.rect.x) + label_padding,
+            baseline_y,
+            label_bytes,
+        )
