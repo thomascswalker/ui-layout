@@ -4,10 +4,10 @@ import ctypes
 from typing import Any, override
 
 from ui.layout import layout
-from ui.platform.generic.renderer import DEPTH_COLORS_RGB, GenericRenderer
+from ui.platform.generic.renderer import GenericRenderer
 from ui.platform.linux import types as xtypes
 from ui.platform.linux import x11
-from ui.types import RGB, Element, Rect
+from ui.types import RGB, Rect
 
 
 class LinuxRenderer(GenericRenderer):
@@ -55,23 +55,20 @@ class LinuxRenderer(GenericRenderer):
         x11.flush(display)
 
     @override
-    def draw_element(
+    def draw_rect(
         self,
         context: int,
-        element: Element,
-        level: int = 0,
+        rect: Rect,
+        fill: RGB,
+        stroke: RGB,
     ) -> None:
-        rect = element.rect
         left = int(rect.x)
         top = int(rect.y)
         rw = max(0, int(rect.width))
         rh = max(0, int(rect.height))
 
-        base = DEPTH_COLORS_RGB[level % len(DEPTH_COLORS_RGB)]
-        border = base - RGB(50, 50, 50)
-
-        fill_px = self._pixel(base.r, base.g, base.b)
-        border_px = self._pixel(border.r, border.g, border.b)
+        fill_px = self._pixel(fill.r, fill.g, fill.b)
+        border_px = self._pixel(stroke.r, stroke.g, stroke.b)
 
         x11.set_foreground(self._display, context, fill_px)
         x11.fill_rectangle(self._display, self._window, context, left, top, rw, rh)
@@ -87,29 +84,13 @@ class LinuxRenderer(GenericRenderer):
         )
         x11.draw_rectangle(self._display, self._window, context, left, top, rw, rh)
 
-        if self._font is not None and rect.width > 50 and rect.height > 30:
-            self.draw_element_label(context, element)
-
-        for child in element.children:
-            self.draw_element(context, child, level + 1)
-
-    def draw_element_label(self, context: int, element: Element) -> None:
-        pos_text = f"{int(element.rect.x)}x, {int(element.rect.y)}y"
-        size_text = f"{int(element.rect.width)}w, {int(element.rect.height)}h"
-        label_text = f"{element.id} [{pos_text}], [{size_text}]"
-        label_padding = 5
-
-        baseline_y = (
-            int(element.rect.y) + label_padding + int(self._font.contents.ascent)
-        )
-
-        label_bytes = label_text.encode("latin-1", errors="replace")
+    def draw_text(self, context: int, text: str, rect: Rect) -> None:
         x11.set_foreground(self._display, context, self._pixel(0, 0, 0))
         x11.draw_string(
             self._display,
             self._window,
             context,
-            int(element.rect.x) + label_padding,
-            baseline_y,
-            label_bytes,
+            int(rect.x),
+            int(rect.y) + int(self._font.contents.ascent),
+            text.encode("latin-1", errors="replace"),
         )

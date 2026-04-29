@@ -4,7 +4,7 @@ from ctypes import wintypes
 from typing import override
 
 from ui.layout import layout
-from ui.platform.generic.renderer import DEPTH_COLORS_RGB, GenericRenderer
+from ui.platform.generic.renderer import GenericRenderer
 from ui.platform.win32 import types
 from ui.platform.win32.winapi import (
     create_solid_brush,
@@ -17,7 +17,7 @@ from ui.platform.win32.winapi import (
     set_background_mode,
     set_text_color,
 )
-from ui.types import RGB, Element, Rect
+from ui.types import RGB, Rect
 
 
 class Win32Renderer(GenericRenderer):
@@ -49,39 +49,23 @@ class Win32Renderer(GenericRenderer):
         self.draw_element(context, self.root)
 
     @override
-    def draw_element(self, context: int, element: Element, level: int = 0) -> None:
-        rect = element.rect
+    def draw_rect(self, context: int, rect: Rect, fill: RGB, stroke: RGB) -> None:
         left = int(rect.x)
         top = int(rect.y)
         right = int(rect.x + rect.width)
         bottom = int(rect.y + rect.height)
 
-        fill = DEPTH_COLORS_RGB[level % len(DEPTH_COLORS_RGB)]
-        stroke = fill - RGB(50, 50, 50)
-
         with draw(context, fill, stroke):
             rectangle(context, left, top, right, bottom)
 
-        if rect.width > 50 and rect.height > 30:
-            self.draw_element_label(context, element)
-
-        for child in element.children:
-            self.draw_element(context, child, level + 1)
-
     @override
-    def draw_element_label(self, context: int, element: Element) -> None:
-        pos_text = f"{int(element.rect.x)}x, {int(element.rect.y)}y"
-        size_text = f"{int(element.rect.width)}w, {int(element.rect.height)}h"
-        label_text = f"{element.id} [{pos_text}], [{size_text}]"
-        label_padding = 5
+    def draw_text(self, context: int, text: str, rect: Rect) -> None:
+        left = int(rect.x)
+        top = int(rect.y)
+        right = int(rect.x + rect.width)
+        bottom = int(rect.y + rect.height)
 
-        rect = element.rect
-        label_rect = wintypes.RECT(
-            int(rect.x) + label_padding,
-            int(rect.y) + label_padding,
-            int(rect.x + rect.width) - label_padding,
-            int(rect.y + rect.height) - label_padding,
-        )
+        label_rect = wintypes.RECT(left, top, right, bottom)
         label_fmt = types.DrawTextFormat.NO_PREFIX | types.DrawTextFormat.WORD_BREAK
 
-        draw_text(context, label_text, -1, label_rect, label_fmt)
+        draw_text(context, text, -1, label_rect, label_fmt)

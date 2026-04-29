@@ -103,6 +103,22 @@ class Rect:
     width: float = 1.0
     height: float = 1.0
 
+    def shrink(self, h: float, v: float) -> Rect:
+        return Rect(
+            self.x + h,
+            self.y + v,
+            self.width - (h * 2),
+            self.height - (v * 2),
+        )
+
+    def grow(self, h: float, v: float) -> Rect:
+        return Rect(
+            self.x - h,
+            self.y - v,
+            self.width + (h * 2),
+            self.height + (v * 2),
+        )
+
     @property
     def center(self) -> Point:
         cx = self.x + self.width / 2.0
