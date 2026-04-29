@@ -4,8 +4,19 @@ from ctypes import wintypes
 from typing import override
 
 from ui.layout import layout
-from ui.platform.win32 import types, winapi
 from ui.platform.generic.renderer import DEPTH_COLORS_RGB, GenericRenderer
+from ui.platform.win32 import types
+from ui.platform.win32.winapi import (
+    create_solid_brush,
+    delete_object,
+    draw,
+    draw_text,
+    fill_rect,
+    get_client_rect,
+    rectangle,
+    set_background_mode,
+    set_text_color,
+)
 from ui.types import RGB, Element, Rect
 
 
@@ -14,21 +25,21 @@ class Win32Renderer(GenericRenderer):
     def paint(self, window: int, context: int) -> None:
         # Get the window client rectangle
         rect = wintypes.RECT()
-        winapi.get_client_rect(window, rect)
+        get_client_rect(window, rect)
         w = rect.right - rect.left
         h = rect.bottom - rect.top
         if w <= 0 or h <= 0:
             return
 
         # Fill the background with white
-        bg = winapi.create_solid_brush(int(RGB.white()))
+        bg = create_solid_brush(int(RGB.white()))
         rect = wintypes.RECT(0, 0, w, h)
-        winapi.fill_rect(context, rect, bg)
-        winapi.delete_object(bg)
+        fill_rect(context, rect, bg)
+        delete_object(bg)
 
         # Set the background mode to transparent and the text color to black
-        winapi.set_bk_mode(context, int(types.BackgroundMode.TRANSPARENT))
-        winapi.set_text_color(context, int(RGB.black()))
+        set_background_mode(context, int(types.BackgroundMode.TRANSPARENT))
+        set_text_color(context, int(RGB.black()))
 
         # Layout the root element and its children
         available = Rect(x=0.0, y=0.0, width=float(w), height=float(h))
@@ -48,8 +59,8 @@ class Win32Renderer(GenericRenderer):
         fill = DEPTH_COLORS_RGB[level % len(DEPTH_COLORS_RGB)]
         stroke = fill - RGB(50, 50, 50)
 
-        with winapi.draw(context, fill, stroke):
-            winapi.rectangle(context, left, top, right, bottom)
+        with draw(context, fill, stroke):
+            rectangle(context, left, top, right, bottom)
 
         if rect.width > 50 and rect.height > 30:
             self.draw_element_label(context, element)
@@ -73,4 +84,4 @@ class Win32Renderer(GenericRenderer):
         )
         label_fmt = types.DrawTextFormat.NO_PREFIX | types.DrawTextFormat.WORD_BREAK
 
-        winapi.draw_text(context, label_text, -1, label_rect, label_fmt)
+        draw_text(context, label_text, -1, label_rect, label_fmt)

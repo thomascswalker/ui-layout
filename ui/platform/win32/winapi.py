@@ -417,7 +417,7 @@ SetBkMode.argtypes = (wintypes.HDC, wintypes.INT)
 SetBkMode.restype = wintypes.INT
 
 
-def set_bk_mode(hdc: int, mode: int) -> int:
+def set_background_mode(hdc: int, mode: int) -> int:
     return SetBkMode(hdc, mode)
 
 
@@ -522,7 +522,7 @@ __all__ = [
     "rectangle",
     "register_class_ex",
     "select_object",
-    "set_bk_mode",
+    "set_background_mode",
     "set_text_color",
     "set_window_text",
     "show_window",
