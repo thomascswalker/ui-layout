@@ -5,7 +5,7 @@ from typing import override
 
 from ui.layout import layout
 from ui.platform.win32 import types, winapi
-from ui.renderer import DEPTH_COLORS_RGB, GenericRenderer
+from ui.platform.generic.renderer import DEPTH_COLORS_RGB, GenericRenderer
 from ui.types import RGB, Element, Rect
 
 

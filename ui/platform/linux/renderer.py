@@ -4,9 +4,9 @@ import ctypes
 from typing import Any, override
 
 from ui.layout import layout
+from ui.platform.generic.renderer import DEPTH_COLORS_RGB, GenericRenderer
 from ui.platform.linux import types as xtypes
 from ui.platform.linux import x11
-from ui.renderer import DEPTH_COLORS_RGB, GenericRenderer
 from ui.types import RGB, Element, Rect
 
 
